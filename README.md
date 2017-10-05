@@ -12,7 +12,9 @@ Customised 3D View toolbar (* WIP: Likely to be changed/tweaked)
 
 Download either the tar.gz or zip from [https://github.com/Digiography/blender_addon_3dview_toolbar/releases/latest](https://github.com/Digiography/blender_addon_3dview_toolbar/releases/latest)
 
-Installing an Addon in Blender
+# Installing an Addon in Blender
+
+\* GitHub automatically appends the version number to the download filenames which causes blender not to load the addon, the easy fix for this is to remove the version number from the downloaded filename before installing in Blender. E.g. addon-0.5.zip to addon.zip.
 
 - [File]->[User Preferences]
 - Select [Add-ons] Tab
