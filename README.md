@@ -1,4 +1,4 @@
-# Blender Addon Pipeline
+# Blender Addon 3D View Toolbar
 
 Customised 3D View toolbar (* WIP: Likely to be changed/tweaked)
 
