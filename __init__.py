@@ -20,7 +20,7 @@ bl_info = {
         "name": "Toolbar Replacement",
         "description": "Custom 3D View Toolbar",
         "author": "Digiography.Studio",
-        "version": (0, 5, 0),
+        "version": (0, 6, 0),
         "blender": (2, 79, 0),
         "location": "3D View Toolbar",
         "wiki_url":    "https://github.com/Digiography/blender_addon_3dview_toolbar/wiki",
@@ -30,23 +30,141 @@ bl_info = {
 
 import bpy
 
+from bpy.props import (StringProperty,BoolProperty,IntProperty,FloatProperty,FloatVectorProperty,EnumProperty,PointerProperty,)
+from bpy.types import (Panel,Operator,AddonPreferences,PropertyGroup,)
+
+class ds_3d_view_addon_prefs(AddonPreferences):
+
+    bl_idname = __package__
+
+    option_show_uv = BoolProperty(
+        name="UV",
+        default = True
+    )
+    option_show_edit_select = BoolProperty(
+        name="Select",
+        default = True
+    )
+    option_show_edit_delete = BoolProperty(
+        name="Delete",
+        default = True
+    )
+    option_show_views = BoolProperty(
+        name="Viewport Shade",
+        default = True
+    )
+    option_show_viewpoints = BoolProperty(
+        name="Viewpoints",
+        default = True
+    )
+    option_show_modes = BoolProperty(
+        name="Edit/Object",
+        default = True
+    )
+    option_show_selection = BoolProperty(
+        name="Selection",
+        default = True
+    )
+    option_hide_menu = BoolProperty(
+        name="Menu",
+        default = True
+    )
+    option_show_menu_toggle = BoolProperty(
+        name="Menu Toggle",
+        default = True
+    )
+    option_show_menu_toggle_state = BoolProperty(
+        name="Menu Toogle State",
+        default = False
+    )
+    option_hide_3d = BoolProperty(
+        name="Default 3D Panel",
+        default = True
+    )
+    option_hide_3d_switcher = BoolProperty(
+        name="Toolbar Switcher",
+        default = True
+    )
+    option_hide_snap = BoolProperty(
+        name="Snap",
+        default = True
+    )
+    option_hide_opengl_render = BoolProperty(
+        name="OpenGL Render",
+        default = True
+    )
+    def draw(self, context):
+
+        layout = self.layout
+
+        row = layout.row(align=True)
+        
+        col = row.column()
+        subrow = col.row()
+
+        box=subrow.box()
+        box.label('Hide',icon='UI')
+        box.prop(self, 'option_hide_menu')
+        box.prop(self, 'option_hide_3d')
+        box.prop(self, 'option_hide_3d_switcher')
+        box.prop(self, 'option_hide_snap')
+        box.prop(self, 'option_hide_opengl_render')
+
+        box=subrow.box()
+        box.label('Show',icon='UI')
+        box.prop(self, 'option_show_menu_toggle')
+        box.prop(self, 'option_show_views')
+        box.prop(self, 'option_show_viewpoints')
+        box.prop(self, 'option_show_modes')
+        box.prop(self, 'option_show_selection')
+        box.prop(self, 'option_show_edit_select')
+        box.prop(self, 'option_show_edit_delete')
+        box.prop(self, 'option_show_uv')
+
+
 def register():
 
     from bpy.utils import register_class
+
+    register_class(ds_3d_view_addon_prefs)
+
+    from . import ds_3d_view
+
+    register_class(ds_3d_view.ds_3d_view_menu_toggle)
+    register_class(ds_3d_view.ds_3d_view_edit)
+    register_class(ds_3d_view.ds_3d_view_object)
+
+    register_class(ds_3d_view.ds_3d_view_select_all)
+    register_class(ds_3d_view.ds_3d_view_select_none)
+
+    register_class(ds_3d_view.ds_3d_view_edit_vertex_delete)
+    register_class(ds_3d_view.ds_3d_view_edit_edge_delete)
+    register_class(ds_3d_view.ds_3d_view_edit_face_delete)
 
     from . import space_view3d 
 
     register_class(space_view3d.VIEW3D_HT_header)
 
-    from . import ds_3d_view
-    ds_3d_view.register()
+
 
 def unregister():
 
     from bpy.utils import unregister_class
+    
+    unregister_class(ds_3d_view_addon_prefs)
 
     from . import ds_3d_view
-    ds_3d_view.unregister()
+
+    unregister_class(ds_3d_view.ds_3d_view_menu_toggle)
+    unregister_class(ds_3d_view.ds_3d_view_edit)
+    unregister_class(ds_3d_view.ds_3d_view_object)
+
+    unregister_class(ds_3d_view.ds_3d_view_select_all)
+    unregister_class(ds_3d_view.ds_3d_view_select_none)
+
+    unregister_class(ds_3d_view.ds_3d_view_edit_vertex_delete)
+    unregister_class(ds_3d_view.ds_3d_view_edit_edge_delete)
+    unregister_class(ds_3d_view.ds_3d_view_edit_face_delete)
 
     from . import space_view3d 
 

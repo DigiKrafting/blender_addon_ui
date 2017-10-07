@@ -26,6 +26,7 @@ from bl_ui.properties_grease_pencil_common import (
 from bl_ui.properties_paint_common import UnifiedPaintPanel
 from bpy.app.translations import contexts as i18n_contexts
 
+from . import ds_3d_view
 
 class VIEW3D_HT_header(Header):
     bl_space_type = 'VIEW_3D'
@@ -39,13 +40,24 @@ class VIEW3D_HT_header(Header):
         toolsettings = context.tool_settings
 
         row = layout.row(align=True)
-        row.template_header()
+        
+        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_3d_switcher:
+            row.template_header()
 
-        VIEW3D_MT_editor_menus.draw_collapsible(context, layout)
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_menu_toggle:
+            layout.operator('ds_3d_view.menu_toggle',icon='TRIA_RIGHT')
+
+        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_menu or bpy.context.user_preferences.addons[__package__].preferences.option_show_menu_toggle_state:
+
+            VIEW3D_MT_editor_menus.draw_collapsible(context, layout)
 
         # Contains buttons like Mode, Pivot, Manipulator, Layer, Mesh Select Mode...
+
+        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_3d:
+        
+            layout.template_header_3D()
+        
         row = layout
-        #layout.template_header_3D()
 
         if obj:
             mode = obj.mode
@@ -82,49 +94,53 @@ class VIEW3D_HT_header(Header):
                 if toolsettings.proportional_edit != 'DISABLED':
                     row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
 
-        # Snap
-#        show_snap = False
-#        if obj is None:
-#            show_snap = True
-#        else:
-#            if mode not in {'SCULPT', 'VERTEX_PAINT', 'WEIGHT_PAINT', 'TEXTURE_PAINT'}:
-#                show_snap = True
-#            else:
-#                paint_settings = UnifiedPaintPanel.paint_settings(context)
-#                if paint_settings:
-#                    brush = paint_settings.brush
-#                    if brush and brush.stroke_method == 'CURVE':
-#                        show_snap = True
+        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_snap:
 
-#        if show_snap:
-#            snap_element = toolsettings.snap_element
-#            row = layout.row(align=True)
-#            row.prop(toolsettings, "use_snap", text="")
-#            row.prop(toolsettings, "snap_element", icon_only=True)
-#            if snap_element == 'INCREMENT':
-#                row.prop(toolsettings, "use_snap_grid_absolute", text="")
-#            else:
-#                row.prop(toolsettings, "snap_target", text="")
-#                if obj:
-#                    if mode == 'EDIT':
-#                        row.prop(toolsettings, "use_snap_self", text="")
-#                    if mode in {'OBJECT', 'POSE', 'EDIT'} and snap_element != 'VOLUME':
-#                        row.prop(toolsettings, "use_snap_align_rotation", text="")
-#
-#            if snap_element == 'VOLUME':
-#                row.prop(toolsettings, "use_snap_peel_object", text="")
-#            elif snap_element == 'FACE':
-#                row.prop(toolsettings, "use_snap_project", text="")
+            # Snap
+            show_snap = False
+            if obj is None:
+                show_snap = True
+            else:
+                if mode not in {'SCULPT', 'VERTEX_PAINT', 'WEIGHT_PAINT', 'TEXTURE_PAINT'}:
+                    show_snap = True
+                else:
+                    paint_settings = UnifiedPaintPanel.paint_settings(context)
+                    if paint_settings:
+                        brush = paint_settings.brush
+                        if brush and brush.stroke_method == 'CURVE':
+                            show_snap = True
+
+            if show_snap:
+                snap_element = toolsettings.snap_element
+                row = layout.row(align=True)
+                row.prop(toolsettings, "use_snap", text="")
+                row.prop(toolsettings, "snap_element", icon_only=True)
+                if snap_element == 'INCREMENT':
+                    row.prop(toolsettings, "use_snap_grid_absolute", text="")
+                else:
+                    row.prop(toolsettings, "snap_target", text="")
+                    if obj:
+                        if mode == 'EDIT':
+                            row.prop(toolsettings, "use_snap_self", text="")
+                        if mode in {'OBJECT', 'POSE', 'EDIT'} and snap_element != 'VOLUME':
+                            row.prop(toolsettings, "use_snap_align_rotation", text="")
+
+                if snap_element == 'VOLUME':
+                    row.prop(toolsettings, "use_snap_peel_object", text="")
+                elif snap_element == 'FACE':
+                    row.prop(toolsettings, "use_snap_project", text="")
 
         # AutoMerge editing
         if obj:
             if (mode == 'EDIT' and obj.type == 'MESH'):
                 layout.prop(toolsettings, "use_mesh_automerge", text="", icon='AUTOMERGE_ON')
 
-        # OpenGL render
-        #row = layout.row(align=True)
-        #row.operator("render.opengl", text="", icon='RENDER_STILL')
-        #row.operator("render.opengl", text="", icon='RENDER_ANIMATION').animation = True
+        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_opengl_render:
+
+            # OpenGL render
+            row = layout.row(align=True)
+            row.operator("render.opengl", text="", icon='RENDER_STILL')
+            row.operator("render.opengl", text="", icon='RENDER_ANIMATION').animation = True
 
         # Pose
         if obj and mode == 'POSE':
@@ -146,6 +162,63 @@ class VIEW3D_HT_header(Header):
             row.prop(context.tool_settings.gpencil_sculpt, "use_select_mask")
             row.prop(context.tool_settings.gpencil_sculpt, "selection_alpha", slider=True)
 
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints:
+            
+            layout.operator("view3d.view_selected", text="C")
+            layout.operator("view3d.viewnumpad", text="T").type = 'TOP'
+            layout.operator("view3d.viewnumpad", text="B").type = 'BOTTOM'
+            layout.operator("view3d.viewnumpad", text="F").type = 'FRONT'
+            layout.operator("view3d.viewnumpad", text="B").type = 'BACK'
+            layout.operator("view3d.viewnumpad", text="R").type = 'RIGHT'
+            layout.operator("view3d.viewnumpad", text="L").type = 'LEFT'
+
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_views:
+            
+            f = layout.operator("wm.context_set_enum", icon='WIRE', text='')
+            f.data_path='space_data.viewport_shade'
+            f.value = 'WIREFRAME'
+
+            f = layout.operator("wm.context_set_enum", icon='SOLID', text='')
+            f.data_path='space_data.viewport_shade'
+            f.value = 'SOLID'
+            
+            f = layout.operator("wm.context_set_enum", icon='MATERIAL', text='')
+            f.data_path='space_data.viewport_shade'
+            f.value = 'MATERIAL'    
+
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_modes:
+
+            layout.operator('ds_3d_view.edit',text="",icon="EDITMODE_HLT")
+            layout.operator('ds_3d_view.object',text="",icon="OBJECT_DATAMODE")
+
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_selection:
+
+            layout.operator('ds_3d_view.select_all', text="S")
+            layout.operator('ds_3d_view.select_none', text="De")
+
+            layout.operator("view3d.select_border", text='B')
+            layout.operator("view3d.select_circle", text='C')
+
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_edit_select:
+
+            layout.operator_context = 'INVOKE_REGION_WIN'
+            layout.operator("mesh.select_mode", text="", icon='VERTEXSEL').type = 'VERT'
+            layout.operator_context = 'INVOKE_REGION_WIN'
+            layout.operator("mesh.select_mode", text="", icon='EDGESEL').type = 'EDGE'
+            layout.operator_context = 'INVOKE_REGION_WIN'
+            layout.operator("mesh.select_mode", text="", icon='FACESEL').type = 'FACE'
+
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_edit_delete:
+
+            layout.operator('ds_3d_view.edit_vertex_delete',text="",icon="VERTEXSEL")
+            layout.operator('ds_3d_view.edit_edge_delete',text="",icon="EDGESEL")
+            layout.operator('ds_3d_view.edit_face_delete',text="",icon="FACESEL")
+
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_uv:
+
+            layout.operator('mesh.mark_seam',text="M",icon="EDGESEL").clear = False
+            layout.operator('mesh.mark_seam',text="U",icon="EDGESEL").clear = True
+            layout.operator('uv.unwrap',text="UV Unwrap",icon="MOD_UVPROJECT")
 
 class VIEW3D_MT_editor_menus(Menu):
     bl_space_type = 'VIEW3D_MT_editor_menus'
