@@ -76,3 +76,17 @@ class ds_3d_view_menu_toggle(bpy.types.Operator):
                 bpy.context.user_preferences.addons[__package__].preferences.option_show_menu_toggle_state=False
         
         return {'FINISHED'}
+
+class ds_3d_view_viewpoints_toggle(bpy.types.Operator):
+    bl_idname = "ds_3d_view.viewpoints_toggle"
+    bl_label = "Viewpoints"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    def execute(self, context):
+
+        if not bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints_toggle_state:
+                bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints_toggle_state=True
+        else:
+                bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints_toggle_state=False
+        
+        return {'FINISHED'}

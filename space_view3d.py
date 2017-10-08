@@ -162,7 +162,10 @@ class VIEW3D_HT_header(Header):
             row.prop(context.tool_settings.gpencil_sculpt, "use_select_mask")
             row.prop(context.tool_settings.gpencil_sculpt, "selection_alpha", slider=True)
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints:
+        if bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints_toggle:
+            layout.operator('ds_3d_view.viewpoints_toggle',icon='TRIA_RIGHT')
+
+        if not bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints or bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints_toggle_state:
             
             layout.operator("view3d.view_selected", text="C")
             layout.operator("view3d.viewnumpad", text="T").type = 'TOP'

@@ -20,7 +20,7 @@ bl_info = {
         "name": "Toolbar Replacement",
         "description": "Custom 3D View Toolbar",
         "author": "Digiography.Studio",
-        "version": (0, 6, 0),
+        "version": (0, 6, 5),
         "blender": (2, 79, 0),
         "location": "3D View Toolbar",
         "wiki_url":    "https://github.com/Digiography/blender_addon_3dview_toolbar/wiki",
@@ -76,7 +76,7 @@ class ds_3d_view_addon_prefs(AddonPreferences):
     option_show_menu_toggle_state = BoolProperty(
         name="Menu Toogle State",
         default = False
-    )
+    )    
     option_hide_3d = BoolProperty(
         name="Default 3D Panel",
         default = True
@@ -93,6 +93,14 @@ class ds_3d_view_addon_prefs(AddonPreferences):
         name="OpenGL Render",
         default = True
     )
+    option_show_viewpoints_toggle = BoolProperty(
+        name="Viewpoints Toggle",
+        default = True
+    )
+    option_show_viewpoints_toggle_state = BoolProperty(
+        name="Viewpoints Toogle State",
+        default = False
+    )    
     def draw(self, context):
 
         layout = self.layout
@@ -113,6 +121,7 @@ class ds_3d_view_addon_prefs(AddonPreferences):
         box=subrow.box()
         box.label('Show',icon='UI')
         box.prop(self, 'option_show_menu_toggle')
+        box.prop(self, 'option_show_viewpoints_toggle')
         box.prop(self, 'option_show_views')
         box.prop(self, 'option_show_viewpoints')
         box.prop(self, 'option_show_modes')
@@ -131,6 +140,7 @@ def register():
     from . import ds_3d_view
 
     register_class(ds_3d_view.ds_3d_view_menu_toggle)
+    register_class(ds_3d_view.ds_3d_view_viewpoints_toggle)
     register_class(ds_3d_view.ds_3d_view_edit)
     register_class(ds_3d_view.ds_3d_view_object)
 
@@ -156,6 +166,7 @@ def unregister():
     from . import ds_3d_view
 
     unregister_class(ds_3d_view.ds_3d_view_menu_toggle)
+    unregister_class(ds_3d_view.ds_3d_view_viewpoints_toggle)
     unregister_class(ds_3d_view.ds_3d_view_edit)
     unregister_class(ds_3d_view.ds_3d_view_object)
 
