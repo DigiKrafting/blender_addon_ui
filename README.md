@@ -1,12 +1,19 @@
-# Blender Addon 3D View Toolbar
+# Blender Addon UI
 
-Customised 3D View toolbar (* WIP: Likely to be changed/tweaked)
+Customised Blender UI (* WIP: Likely to be changed/tweaked)
+
+# Features
+
+## Customised Toolbars
+- Model
+- Rigging
+- UV
 
 # Required Blender Version
 
 2.79 
 
-\* May work in previous versions but untested, space_view3d.py will likely cause issues/unexpected behaviour.
+\* May work in previous versions but untested, space_info.py and space_view3d.py will likely cause issues/unexpected behaviour.
 
 # Installation
 

@@ -26,7 +26,7 @@ from bl_ui.properties_grease_pencil_common import (
 from bl_ui.properties_paint_common import UnifiedPaintPanel
 from bpy.app.translations import contexts as i18n_contexts
 
-from . import ds_3d_view
+from . import ds_ui
 
 class VIEW3D_HT_header(Header):
     bl_space_type = 'VIEW_3D'
@@ -39,62 +39,54 @@ class VIEW3D_HT_header(Header):
         obj = context.active_object
         toolsettings = context.tool_settings
 
-        row = layout.row(align=True)
+        if ds_ui.toggle_show('view3d_standard'):
+            layout.operator('ds_ui.toggle',icon='TRIA_RIGHT',text="").option_toggle='view3d_standard'
         
-        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_3d_switcher:
+        if ds_ui.toggle_draw('view3d_standard'):
+
+            row = layout.row(align=True)
             row.template_header()
-
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_menu_toggle:
-            layout.operator('ds_3d_view.menu_toggle',icon='TRIA_RIGHT')
-
-        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_menu or bpy.context.user_preferences.addons[__package__].preferences.option_show_menu_toggle_state:
 
             VIEW3D_MT_editor_menus.draw_collapsible(context, layout)
 
-        # Contains buttons like Mode, Pivot, Manipulator, Layer, Mesh Select Mode...
-
-        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_3d:
-        
+            # Contains buttons like Mode, Pivot, Manipulator, Layer, Mesh Select Mode...
+            row = layout
             layout.template_header_3D()
-        
-        row = layout
 
-        if obj:
-            mode = obj.mode
-            # Particle edit
-            if mode == 'PARTICLE_EDIT':
-                row.prop(toolsettings.particle_edit, "select_mode", text="", expand=True)
+            if obj:
+                mode = obj.mode
+                # Particle edit
+                if mode == 'PARTICLE_EDIT':
+                    row.prop(toolsettings.particle_edit, "select_mode", text="", expand=True)
 
-            # Occlude geometry
-            if ((view.viewport_shade not in {'BOUNDBOX', 'WIREFRAME'} and (mode == 'PARTICLE_EDIT' or (mode == 'EDIT' and obj.type == 'MESH'))) or
-                    (mode == 'WEIGHT_PAINT')):
-                row.prop(view, "use_occlude_geometry", text="")
+                # Occlude geometry
+                if ((view.viewport_shade not in {'BOUNDBOX', 'WIREFRAME'} and (mode == 'PARTICLE_EDIT' or (mode == 'EDIT' and obj.type == 'MESH'))) or
+                        (mode == 'WEIGHT_PAINT')):
+                    row.prop(view, "use_occlude_geometry", text="")
 
-            # Proportional editing
-            if context.gpencil_data and context.gpencil_data.use_stroke_edit_mode:
-                row = layout.row(align=True)
-                row.prop(toolsettings, "proportional_edit", icon_only=True)
-                if toolsettings.proportional_edit != 'DISABLED':
-                    row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
-            elif mode in {'EDIT', 'PARTICLE_EDIT'}:
-                row = layout.row(align=True)
-                row.prop(toolsettings, "proportional_edit", icon_only=True)
-                if toolsettings.proportional_edit != 'DISABLED':
-                    row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
-            elif mode == 'OBJECT':
-                row = layout.row(align=True)
-                row.prop(toolsettings, "use_proportional_edit_objects", icon_only=True)
-                if toolsettings.use_proportional_edit_objects:
-                    row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
-        else:
-            # Proportional editing
-            if context.gpencil_data and context.gpencil_data.use_stroke_edit_mode:
-                row = layout.row(align=True)
-                row.prop(toolsettings, "proportional_edit", icon_only=True)
-                if toolsettings.proportional_edit != 'DISABLED':
-                    row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
-
-        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_snap:
+                # Proportional editing
+                if context.gpencil_data and context.gpencil_data.use_stroke_edit_mode:
+                    row = layout.row(align=True)
+                    row.prop(toolsettings, "proportional_edit", icon_only=True)
+                    if toolsettings.proportional_edit != 'DISABLED':
+                        row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
+                elif mode in {'EDIT', 'PARTICLE_EDIT'}:
+                    row = layout.row(align=True)
+                    row.prop(toolsettings, "proportional_edit", icon_only=True)
+                    if toolsettings.proportional_edit != 'DISABLED':
+                        row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
+                elif mode == 'OBJECT':
+                    row = layout.row(align=True)
+                    row.prop(toolsettings, "use_proportional_edit_objects", icon_only=True)
+                    if toolsettings.use_proportional_edit_objects:
+                        row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
+            else:
+                # Proportional editing
+                if context.gpencil_data and context.gpencil_data.use_stroke_edit_mode:
+                    row = layout.row(align=True)
+                    row.prop(toolsettings, "proportional_edit", icon_only=True)
+                    if toolsettings.proportional_edit != 'DISABLED':
+                        row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
 
             # Snap
             show_snap = False
@@ -130,98 +122,326 @@ class VIEW3D_HT_header(Header):
                 elif snap_element == 'FACE':
                     row.prop(toolsettings, "use_snap_project", text="")
 
-        # AutoMerge editing
-        if obj:
-            if (mode == 'EDIT' and obj.type == 'MESH'):
-                layout.prop(toolsettings, "use_mesh_automerge", text="", icon='AUTOMERGE_ON')
-
-        if not bpy.context.user_preferences.addons[__package__].preferences.option_hide_opengl_render:
+            # AutoMerge editing
+            if obj:
+                if (mode == 'EDIT' and obj.type == 'MESH'):
+                    layout.prop(toolsettings, "use_mesh_automerge", text="", icon='AUTOMERGE_ON')
 
             # OpenGL render
             row = layout.row(align=True)
             row.operator("render.opengl", text="", icon='RENDER_STILL')
             row.operator("render.opengl", text="", icon='RENDER_ANIMATION').animation = True
 
-        # Pose
-        if obj and mode == 'POSE':
+            # Pose
+            if obj and mode == 'POSE':
+                row = layout.row(align=True)
+                row.operator("pose.copy", text="", icon='COPYDOWN')
+                row.operator("pose.paste", text="", icon='PASTEDOWN').flipped = False
+                row.operator("pose.paste", text="", icon='PASTEFLIPDOWN').flipped = True
+
+            # GPencil
+            if context.gpencil_data and context.gpencil_data.use_stroke_edit_mode:
+                row = layout.row(align=True)
+                row.operator("gpencil.copy", text="", icon='COPYDOWN')
+                row.operator("gpencil.paste", text="", icon='PASTEDOWN')
+
+                # XXX: icon
+                layout.prop(context.gpencil_data, "use_onion_skinning", text="Onion Skins", icon='PARTICLE_PATH')
+
+                row = layout.row(align=True)
+                row.prop(context.tool_settings.gpencil_sculpt, "use_select_mask")
+                row.prop(context.tool_settings.gpencil_sculpt, "selection_alpha", slider=True)
+
+        _ui_mode = ds_ui.ui_mode()
+
+        _obj = context.active_object
+        _obj_mode = context.mode
+
+        #print("_obj_mode:",_obj_mode)
+
+            #if bpy.context.active_object and bpy.context.active_object.mode=='OBJECT':
+
+        #if _ui_mode=='model':
+
+            #if ds_ui.toggle_show('view3d_primitives'):
+            #    layout.operator('ds_ui.toggle',icon='OUTLINER_OB_MESH',text="").option_toggle='view3d_primitives'
+            
+            #if ds_ui.toggle_draw('view3d_primitives'):
+                            
+
+
+
+            #if ds_ui.toggle_show('view3d_curves'):
+            #    layout.operator('ds_ui.toggle',icon='OUTLINER_OB_CURVE',text="").option_toggle='view3d_curves'
+            
+            #if ds_ui.toggle_draw('view3d_curves'):
+
+        if _obj:
+
+            layout.menu("VIEW3D_MT_object",icon='COLLAPSEMENU',text="")
+
+        layout.menu('ds_ui.view3d_viewpoints_menu',icon="CURSOR",text='')
+        layout.operator('screen.region_quadview',icon='MOD_LATTICE',text="")
+        layout.operator('view3d.view_selected',icon='ZOOM_SELECTED',text="")
+        layout.operator('view3d.localview',icon='RESTRICT_VIEW_OFF',text="")
+        layout.operator('view3d.view_persportho',icon='ORTHO',text="")
+        layout.operator('view3d.zoom_border', text="",icon='BORDERMOVE')
+
+        _icon="FORCE_FORCE"
+        _shade=bpy.context.space_data.viewport_shade
+        if _shade=='RENDERED':
+            _icon='SMOOTH'
+        elif _shade=='WIREFRAME':
+            _icon='WIRE'
+        elif _shade=='SOLID':
+            _icon='SOLID'
+        elif _shade=='MATERIAL':
+            _icon='MATERIAL'
+        layout.menu('ds_ui.view3d_shade_menu',icon=_icon,text='')
+
+        _icon="FORCE_FORCE"
+        _pivot=bpy.context.space_data.pivot_point
+        if _pivot == 'ACTIVE_ELEMENT':
+            _icon='ROTACTIVE'
+        elif _pivot == 'MEDIAN_POINT':
+            _icon='ROTATECENTER'
+        elif _pivot == 'INDIVIDUAL_ORIGINS':
+            _icon='ROTATECOLLECTION'
+        elif _pivot == 'CURSOR':
+            _icon='CURSOR'
+        elif _pivot == 'BOUNDING_BOX_CENTER':
+            _icon='ROTATE'
+        layout.menu('ds_ui.view3d_pivot_menu',icon=_icon,text='')
+
+#        layout.operator("transform.translate",icon='MAN_TRANS', text="")
+        view = context.space_data
+
+       # if (( (_obj_mode == 'PARTICLE_EDIT' or (_obj_mode == 'EDIT' and _obj.type == 'MESH'))) or (_obj_mode == 'WEIGHT_PAINT')):
+        
+        layout.prop(view, "use_occlude_geometry", text="")
+
+        layout.operator('ds_ui.select_all', text="",icon='RESTRICT_COLOR_ON')
+        layout.operator('ds_ui.select_none', text="",icon='RESTRICT_COLOR_OFF')
+
+        layout.operator("view3d.select_border", text='',icon='BORDER_RECT')
+        layout.operator("view3d.select_circle", text='',icon='BORDER_LASSO')
+
+        layout.operator("object.select_less", text='',icon='DISCLOSURE_TRI_DOWN')
+        layout.operator("object.select_more", text='',icon='DISCLOSURE_TRI_RIGHT')
+
+        if _ui_mode=='model':
+
+            layout.operator("transform.translate",icon='MAN_TRANS', text="")
+            layout.operator("transform.rotate", icon='ROTATE', text="")
+            layout.operator("transform.resize", icon='MAN_SCALE', text="")
+            
+            box=layout.row()
+            box.operator("ds_ui.manipulator_decrease", icon='ZOOMOUT', text='')
+            box.operator("ds_ui.manipulator_none", icon='MANIPUL', text='')
+            box.operator("ds_ui.manipulator_move", icon='MAN_TRANS', text='')
+            box.operator("ds_ui.manipulator_rotate", icon='MAN_ROT', text='')
+            box.operator("ds_ui.manipulator_scale", icon='MAN_SCALE', text='')
+            box.operator("ds_ui.manipulator_increase", icon='ZOOMIN', text='')
+
+        if _obj_mode=='EDIT_MESH' and (_ui_mode=='model' or _ui_mode=='uv'):
+
+            layout.operator("mesh.select_mode", text="", icon='VERTEXSEL').type = 'VERT'
+
+            layout.operator("mesh.select_mode", text="", icon='EDGESEL').type = 'EDGE'
+
+            layout.operator("mesh.select_mode", text="", icon='FACESEL').type = 'FACE'
+
+            layout.operator('mesh.delete',text="",icon="VERTEXSEL").type = 'VERT'
+            layout.operator('mesh.delete',text="",icon="EDGESEL").type = 'EDGE'
+            layout.operator('mesh.delete',text="",icon="FACESEL").type = 'FACE'
+
+        if _ui_mode=='rig':
+
+#            if _obj_mode=='EDIT_ARMATURE':
+            #    layout.menu("INFO_MT_edit_armature_add", icon='BONE_DATA')
+
+            #if _obj_mode=='OBJECT':
+
+            #    layout.menu("INFO_MT_armature_add", icon='BONE_DATA')
+            
+            #if _obj_mode=='OBJECT':
+            #    layout.operator('object.mode_set',text="Weight Paint",icon="WPAINT_HLT").mode='WEIGHT_PAINT'
+
+
+
             row = layout.row(align=True)
             row.operator("pose.copy", text="", icon='COPYDOWN')
             row.operator("pose.paste", text="", icon='PASTEDOWN').flipped = False
             row.operator("pose.paste", text="", icon='PASTEFLIPDOWN').flipped = True
 
-        # GPencil
-        if context.gpencil_data and context.gpencil_data.use_stroke_edit_mode:
-            row = layout.row(align=True)
-            row.operator("gpencil.copy", text="", icon='COPYDOWN')
-            row.operator("gpencil.paste", text="", icon='PASTEDOWN')
 
-            # XXX: icon
-            layout.prop(context.gpencil_data, "use_onion_skinning", text="Onion Skins", icon='PARTICLE_PATH')
+# Tools
+        if (_ui_mode=='model' or _ui_mode=='uv') and _obj_mode=='EDIT_MESH':
 
-            row = layout.row(align=True)
-            row.prop(context.tool_settings.gpencil_sculpt, "use_select_mask")
-            row.prop(context.tool_settings.gpencil_sculpt, "selection_alpha", slider=True)
+            _mesh=_obj.data
+            _selected = True
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints_toggle:
-            layout.operator('ds_3d_view.viewpoints_toggle',icon='TRIA_RIGHT')
-
-        if not bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints or bpy.context.user_preferences.addons[__package__].preferences.option_show_viewpoints_toggle_state:
+            _selected_vertices = False
+            _selected_edges = False
+            _selected_faces = False
             
-            layout.operator("view3d.view_selected", text="C")
-            layout.operator("view3d.viewnumpad", text="T").type = 'TOP'
-            layout.operator("view3d.viewnumpad", text="B").type = 'BOTTOM'
-            layout.operator("view3d.viewnumpad", text="F").type = 'FRONT'
-            layout.operator("view3d.viewnumpad", text="B").type = 'BACK'
-            layout.operator("view3d.viewnumpad", text="R").type = 'RIGHT'
-            layout.operator("view3d.viewnumpad", text="L").type = 'LEFT'
+            _select_mode=bpy.context.scene.tool_settings.mesh_select_mode
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_views:
+            if _select_mode[0]:
+                _selected_vertices=True
+            if _select_mode[1]:
+                _selected_edges=True
+            if _select_mode[2]:
+                _selected_faces=True
+                
+
+
+            #if ds_ui.toggle_show('view3d_select_tools'):
+            #    layout.operator('ds_ui.toggle',icon='TRIA_RIGHT',text="").option_toggle='view3d_select_tools'
+            #if ds_ui.toggle_draw('view3d_select_tools'):
+
+                #if ds_ui.toggle_draw('view3d_edges'):
+
+                    #layout.menu('ds_ui.view3d_edges_menu',icon="EDGESEL")
+                
+                #print('----:',getattr(bpy.ops.mesh, 'select_mode'))
+                
+            if _ui_mode=='model' and (_selected_vertices or _selected_edges):
+                
+                layout.operator("mesh.edge_face_add")
+
+            if _selected_edges:
+
+                layout.operator("mesh.edge_split", text='Split')
+                layout.operator("mesh.loop_multi_select", text='Loop').ring=False
+                layout.operator("mesh.loop_multi_select", text='Ring').ring=True
+                layout.operator('mesh.bevel',text="Bevel").vertex_only=False
+                #layout.operator('mesh.mark_seam',text="M",icon="EDGESEL").clear = False
+                #layout.operator('mesh.mark_seam',text="U",icon="EDGESEL").clear = True
+
+            #if _selected_faces:
+
+            #if ds_ui.toggle_draw('view3d_faces'):
+
+            #    layout.operator('mesh.tris_convert_to_quads',text="tris_to_quads",icon="EDGESEL")
+
+            if _ui_mode=='model' and (_selected_edges or _selected_faces):
+
+                layout.operator('mesh.subdivide',text='SubD')
+                layout.operator('mesh.unsubdivide',text='UnSubD')
+
+            #layout.operator_context = 'INVOKE_REGION_WIN'
+            #layout.operator("mesh.select_mode", text="", icon='FACESEL').type = 'FACE'
+            #if ds_ui.toggle_draw('view3d_face'):
+
+
+
+            #if ds_ui.toggle_show('view3d_faces'):
+            #    layout.operator('ds_ui.toggle',icon='SNAP_FACE',text="Faces").option_toggle='view3d_faces'
+
+# MESH
+
+
+ #       layout.operator("SpaceView3D.use_occlude_geometry", text="geo", icon='FACESEL')
+
+
             
-            f = layout.operator("wm.context_set_enum", icon='WIRE', text='')
-            f.data_path='space_data.viewport_shade'
-            f.value = 'WIREFRAME'
+        if _ui_mode=='model' and _obj_mode=='OBJECT':
 
-            f = layout.operator("wm.context_set_enum", icon='SOLID', text='')
-            f.data_path='space_data.viewport_shade'
-            f.value = 'SOLID'
+
+            if _obj:
+
+
+                f=layout.operator("object.transform_apply")
+                f.location=False
+                f.rotation=True
+                f.scale=True
+
+                layout.operator("object.duplicate_move")
+                layout.operator("object.join")
+                layout.operator("object.delete")
+
+#bpy.ops.object.(use_global=False)
+        if _obj_mode=='EDIT_MESH' or _obj_mode=='EDIT_ARMATURE':
+
+            if ds_ui.toggle_show('view3d_extrude'):
+                layout.operator('ds_ui.toggle',icon='MOD_SHRINKWRAP',text="").option_toggle='view3d_extrude'
             
-            f = layout.operator("wm.context_set_enum", icon='MATERIAL', text='')
-            f.data_path='space_data.viewport_shade'
-            f.value = 'MATERIAL'    
+            if ds_ui.toggle_draw('view3d_extrude'):
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_modes:
+                if _ui_mode=='model':
+                    layout.operator("view3d.edit_mesh_extrude_move_normal", text='Normal')
+                    layout.operator('ds_ui.edit_mesh_extrude_x', text="X Axis")
+                    layout.operator('ds_ui.edit_mesh_extrude_y', text="Y Axis")
+                    layout.operator('ds_ui.edit_mesh_extrude_z', text="Z Axis")
+                elif _ui_mode=='rig':
+                    layout.operator("armature.extrude_move", text='extrude_move')
+                    layout.operator('ds_ui.edit_armature_extrude_x', text="X Axis")
+                    layout.operator('ds_ui.edit_armature_extrude_y', text="Y Axis")
+                    layout.operator('ds_ui.edit_armature_extrude_z', text="Z Axis")
 
-            layout.operator('ds_3d_view.edit',text="",icon="EDITMODE_HLT")
-            layout.operator('ds_3d_view.object',text="",icon="OBJECT_DATAMODE")
+        if _obj_mode=='EDIT_MESH' and _ui_mode=='model':
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_selection:
+            if ds_ui.toggle_show('view3d_boolean'):
+                layout.operator('ds_ui.toggle',icon='MOD_BOOLEAN',text="").option_toggle='view3d_boolean'
+            
+            if ds_ui.toggle_draw('view3d_boolean'):
 
-            layout.operator('ds_3d_view.select_all', text="S")
-            layout.operator('ds_3d_view.select_none', text="De")
+                layout.operator('mesh.intersect_boolean',text="Diff").operation='DIFFERENCE'
+                layout.operator('mesh.intersect_boolean',text="Intersect").operation='INTERSECT'
+                layout.operator('mesh.intersect_boolean',text="Union").operation='UNION'
 
-            layout.operator("view3d.select_border", text='B')
-            layout.operator("view3d.select_circle", text='C')
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_edit_select:
 
-            layout.operator_context = 'INVOKE_REGION_WIN'
-            layout.operator("mesh.select_mode", text="", icon='VERTEXSEL').type = 'VERT'
-            layout.operator_context = 'INVOKE_REGION_WIN'
-            layout.operator("mesh.select_mode", text="", icon='EDGESEL').type = 'EDGE'
-            layout.operator_context = 'INVOKE_REGION_WIN'
-            layout.operator("mesh.select_mode", text="", icon='FACESEL').type = 'FACE'
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_edit_delete:
+        #if _obj_mode=='EDIT_MESH' and _ui_mode=='model':
+            #if _obj:
+                #layout.menu("VIEW3D_MT_edit_mesh_clean")
 
-            layout.operator('ds_3d_view.edit_vertex_delete',text="",icon="VERTEXSEL")
-            layout.operator('ds_3d_view.edit_edge_delete',text="",icon="EDGESEL")
-            layout.operator('ds_3d_view.edit_face_delete',text="",icon="FACESEL")
+            #if ds_ui.toggle_show('view3d_cleanup'):
+            #    layout.operator('ds_ui.toggle',icon='PARTICLE_POINT',text="Cleanup").option_toggle='view3d_cleanup'
+            #if ds_ui.toggle_draw('view3d_cleanup'):
 
-        if bpy.context.user_preferences.addons[__package__].preferences.option_show_uv:
+            #    layout.operator('mesh.delete_loose',text="delete_loose",icon="EDGESEL")
+            #    layout.operator('mesh.remove_doubles',text="remove_doubles",icon="EDGESEL")
+            #    layout.operator('mesh.fill_holes',text="fill_holes",icon="EDGESEL")
+
+        if _obj_mode=='EDIT_MESH' and _ui_mode=='uv':
 
             layout.operator('mesh.mark_seam',text="M",icon="EDGESEL").clear = False
             layout.operator('mesh.mark_seam',text="U",icon="EDGESEL").clear = True
-            layout.operator('uv.unwrap',text="UV Unwrap",icon="MOD_UVPROJECT")
+            layout.operator('uv.unwrap',text="Unwrap",icon="MOD_UVPROJECT")
+            layout.operator('ds_ui.uv_unwrap',text="Unwrap ALL",icon="MOD_UVPROJECT")
+        
+        if _ui_mode=='rig':
+
+            #if len(bpy.context.selected_objects)==2:
+                #ic=0
+                #for ob in bpy.context.selected_objects:
+                #    if ob.type=='MESH':
+                #        ic=ic+1
+                #if ic==2:
+                    #layout.operator('ds_ui.view3d_transfer_vertext_groups',text='Transfer Vertex Groups')
+
+            if _obj_mode=='PAINT_WEIGHT':
+ 
+                layout.operator('ds_ui.view3d_weight_paint_set_brush',icon='BRUSH_DATA',text="Add").option_value='Add'
+                layout.operator('ds_ui.view3d_weight_paint_set_brush',icon='BRUSH_DATA',text="Blur").option_value='Blur'
+                layout.operator('ds_ui.view3d_weight_paint_set_brush',icon='BRUSH_DATA',text="Darken").option_value='Darken'
+                layout.operator('ds_ui.view3d_weight_paint_set_brush',icon='BRUSH_DATA',text="Lighten").option_value='Lighten'
+                layout.operator('ds_ui.view3d_weight_paint_set_brush',icon='BRUSH_DATA',text="Subtract").option_value='Subtract'
+                
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_weight_dec',icon="ZOOMOUT",text='')
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_weight_default',text='Weight: '+"{:.2f}".format(bpy.context.scene.tool_settings.unified_paint_settings.weight))
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_weight_inc',icon="ZOOMIN",text='')
+            
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_radius_dec',icon="ZOOMOUT",text='')
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_radius_default',text='Radius: '+"{:.0f}".format(bpy.context.scene.tool_settings.unified_paint_settings.size)+'px')
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_radius_inc',icon="ZOOMIN",text='')
+
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_strength_dec',icon="ZOOMOUT",text='')
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_strength_default',text='Strength: '+"{:.2f}".format(context.tool_settings.weight_paint.brush.strength))
+                layout.operator('ds_ui.view3d_weight_paint_set_brush_strength_inc',icon="ZOOMIN",text='')
 
 class VIEW3D_MT_editor_menus(Menu):
     bl_space_type = 'VIEW3D_MT_editor_menus'

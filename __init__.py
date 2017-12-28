@@ -17,170 +17,189 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-        "name": "Toolbar Replacement",
-        "description": "Custom 3D View Toolbar",
+        "name": "UI",
+        "description": "UI Tweaks",
         "author": "Digiography.Studio",
-        "version": (0, 6, 5),
+        "version": (0, 7, 0),
         "blender": (2, 79, 0),
-        "location": "3D View Toolbar",
-        "wiki_url":    "https://github.com/Digiography/blender_addon_3dview_toolbar/wiki",
-        "tracker_url": "https://github.com/Digiography/blender_addon_3dview_toolbar/issues",
-        "category": "3D View",
+        "location": "Properties > Scene, Info Toolbar, 3D View Toolbar",
+        "wiki_url":    "https://github.com/Digiography/blender_addon_pipeline/wiki",
+        "tracker_url": "https://github.com/Digiography/blender_addon_pipeline/issues",
+        "category": "System",
 }
 
 import bpy
 
-from bpy.props import (StringProperty,BoolProperty,IntProperty,FloatProperty,FloatVectorProperty,EnumProperty,PointerProperty,)
-from bpy.types import (Panel,Operator,AddonPreferences,PropertyGroup,)
+from os import path, makedirs
 
-class ds_3d_view_addon_prefs(AddonPreferences):
+class ds_ui_quit(bpy.types.Operator):
+    bl_idname = "ds_ui.quit"
+    bl_label = "Quit"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    def execute(self, context):
+        
+        bpy.ops.wm.save_userpref()
+
+        if bpy.data.is_dirty:
+            bpy.ops.wm.quit_blender('INVOKE_DEFAULT')
+        else:
+            bpy.ops.wm.quit_blender()
+
+        return {'FINISHED'}
+
+class ds_ui_cycles(bpy.types.Operator):
+
+    bl_idname = "ds_ui.cycles"
+    bl_label = "Set Render Engine to CYCLES"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+ 
+    def execute(self, context):
+
+        bpy.context.scene.render.engine = 'CYCLES'
+
+        return {'FINISHED'}
+
+class ds_ui_addon_prefs(bpy.types.AddonPreferences):
 
     bl_idname = __package__
 
-    option_show_uv = BoolProperty(
-        name="UV",
-        default = True
-    )
-    option_show_edit_select = BoolProperty(
-        name="Select",
-        default = True
-    )
-    option_show_edit_delete = BoolProperty(
-        name="Delete",
-        default = True
-    )
-    option_show_views = BoolProperty(
-        name="Viewport Shade",
-        default = True
-    )
-    option_show_viewpoints = BoolProperty(
-        name="Viewpoints",
-        default = True
-    )
-    option_show_modes = BoolProperty(
-        name="Edit/Object",
-        default = True
-    )
-    option_show_selection = BoolProperty(
-        name="Selection",
-        default = True
-    )
-    option_hide_menu = BoolProperty(
-        name="Menu",
-        default = True
-    )
-    option_show_menu_toggle = BoolProperty(
-        name="Menu Toggle",
-        default = True
-    )
-    option_show_menu_toggle_state = BoolProperty(
-        name="Menu Toogle State",
-        default = False
-    )    
-    option_hide_3d = BoolProperty(
-        name="Default 3D Panel",
-        default = True
-    )
-    option_hide_3d_switcher = BoolProperty(
-        name="Toolbar Switcher",
-        default = True
-    )
-    option_hide_snap = BoolProperty(
-        name="Snap",
-        default = True
-    )
-    option_hide_opengl_render = BoolProperty(
-        name="OpenGL Render",
-        default = True
-    )
-    option_show_viewpoints_toggle = BoolProperty(
-        name="Viewpoints Toggle",
-        default = True
-    )
-    option_show_viewpoints_toggle_state = BoolProperty(
-        name="Viewpoints Toogle State",
-        default = False
-    )    
+    # Global Options
+
+    option_ui_mode = bpy.props.StringProperty(name="UI Mode",default='model',)
+    option_ui_xray_state = bpy.props.BoolProperty(name="Xray Mode",default=False,)
+    
+    option_save_before_export = bpy.props.BoolProperty(name="Save Before Export",default=True,)
+
+    # Info Toolbar
+
+    option_info_obj_btns = bpy.props.BoolProperty(name="OBJ Import/Export",default=True,)
+    option_info_fbx_btns = bpy.props.BoolProperty(name="FBX Import/Export",default=True,)
+
+    option_info_blender_left = bpy.props.BoolProperty(name="Blender Icon Left",default=True,)
+
+    option_info_standard = bpy.props.BoolProperty(name="Show",default=True,)
+    option_info_standard_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_info_standard_state = bpy.props.BoolProperty(name="state",default=False,)
+    
+    option_info_file_icons = bpy.props.BoolProperty(name="New",default=True,)
+    option_info_new = bpy.props.BoolProperty(name="New",default=True,)
+    option_info_open = bpy.props.BoolProperty(name="Open",default=True,)
+    option_info_save = bpy.props.BoolProperty(name="Save",default=True,)
+    option_info_save_as = bpy.props.BoolProperty(name="Save As",default=True,)
+
+    option_info_meshes = bpy.props.BoolProperty(name="Meshes",default=True,)
+    option_info_mesh_select = bpy.props.BoolProperty(name="Auto Select First",default=True,)
+    option_info_mesh_select_edit = bpy.props.BoolProperty(name=" Auto Edit",default=True,)
+    option_info_mesh_select_all = bpy.props.BoolProperty(name="Auto Select All",default=False,)
+
+    option_info_uvs = bpy.props.BoolProperty(name="Meshes",default=True,)
+    option_info_uv_select = bpy.props.BoolProperty(name="Auto Select First",default=True,)
+    option_info_uv_select_edit = bpy.props.BoolProperty(name=" Auto Edit",default=True,)
+    option_info_uv_select_all = bpy.props.BoolProperty(name="Auto Select All",default=True,)
+
+    option_info_armatures = bpy.props.BoolProperty(name="Armatures",default=True,)
+    option_info_armature_select = bpy.props.BoolProperty(name="Armatures Select",default=True,)
+
+    option_info_fullscreen = bpy.props.BoolProperty(name="Fullscreen",default=True,)
+    option_info_console = bpy.props.BoolProperty(name="Console",default=True,)
+    option_info_prefs = bpy.props.BoolProperty(name="Preferences",default=True,)
+    option_info_quit = bpy.props.BoolProperty(name="Quit",default=True,)
+
+    # View 3D Toolbar
+
+    option_view3d_standard = bpy.props.BoolProperty(name="Show",default=True,)
+    option_view3d_standard_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_standard_state = bpy.props.BoolProperty(name="state",default=False,)
+
+    option_view3d_primitives = bpy.props.BoolProperty(name="Primitives",default=False,)
+    option_view3d_primitives_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_primitives_state = bpy.props.BoolProperty(name="state",default=False,)
+
+    option_view3d_edges = bpy.props.BoolProperty(name="Edges",default=False,)
+    option_view3d_edges_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_edges_state = bpy.props.BoolProperty(name="state",default=False,)
+
+    option_view3d_extrude = bpy.props.BoolProperty(name="Extrude",default=False,)
+    option_view3d_extrude_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_extrude_state = bpy.props.BoolProperty(name="state",default=False,)
+
+    option_view3d_faces = bpy.props.BoolProperty(name="Faces",default=False,)
+    option_view3d_faces_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_faces_state = bpy.props.BoolProperty(name="state",default=False,)
+
+    option_view3d_mesh = bpy.props.BoolProperty(name="Mesh",default=False,)
+    option_view3d_mesh_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_mesh_state = bpy.props.BoolProperty(name="state",default=False,)
+
+    option_view3d_cleanup = bpy.props.BoolProperty(name="Cleanup",default=False,)
+    option_view3d_cleanup_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_cleanup_state = bpy.props.BoolProperty(name="state",default=False,)
+
+    option_view3d_boolean = bpy.props.BoolProperty(name="Boolean",default=True,)
+    option_view3d_boolean_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_boolean_state = bpy.props.BoolProperty(name="state",default=False,)    
+
+    option_view3d_select_tools = bpy.props.BoolProperty(name="Select Mode Tools",default=False,)
+    option_view3d_select_tools_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
+    option_view3d_select_tools_state = bpy.props.BoolProperty(name="state",default=False,)
+
+
+
     def draw(self, context):
 
         layout = self.layout
 
+        layout.label('Standard',icon='UI')
+
         row = layout.row(align=True)
-        
+
         col = row.column()
         subrow = col.row()
 
         box=subrow.box()
-        box.label('Hide',icon='UI')
-        box.prop(self, 'option_hide_menu')
-        box.prop(self, 'option_hide_3d')
-        box.prop(self, 'option_hide_3d_switcher')
-        box.prop(self, 'option_hide_snap')
-        box.prop(self, 'option_hide_opengl_render')
-
-        box=subrow.box()
-        box.label('Show',icon='UI')
-        box.prop(self, 'option_show_menu_toggle')
-        box.prop(self, 'option_show_viewpoints_toggle')
-        box.prop(self, 'option_show_views')
-        box.prop(self, 'option_show_viewpoints')
-        box.prop(self, 'option_show_modes')
-        box.prop(self, 'option_show_selection')
-        box.prop(self, 'option_show_edit_select')
-        box.prop(self, 'option_show_edit_delete')
-        box.prop(self, 'option_show_uv')
-
+        box.label('Info Toolbar',icon='UI')
+        box.prop(self, 'option_info_standard')
+        box.prop(self, 'option_info_standard_toggle')
+        
+        box.label('View 3D Toolbar',icon='UI')
+        box.prop(self, 'option_view3d_standard')
+        box.prop(self, 'option_view3d_standard_toggle')
 
 def register():
 
     from bpy.utils import register_class
 
-    register_class(ds_3d_view_addon_prefs)
+    register_class(ds_ui_addon_prefs)
 
-    from . import ds_3d_view
+    register_class(ds_ui_quit)
 
-    register_class(ds_3d_view.ds_3d_view_menu_toggle)
-    register_class(ds_3d_view.ds_3d_view_viewpoints_toggle)
-    register_class(ds_3d_view.ds_3d_view_edit)
-    register_class(ds_3d_view.ds_3d_view_object)
+    from . import ds_ui
 
-    register_class(ds_3d_view.ds_3d_view_select_all)
-    register_class(ds_3d_view.ds_3d_view_select_none)
+    ds_ui.register()
 
-    register_class(ds_3d_view.ds_3d_view_edit_vertex_delete)
-    register_class(ds_3d_view.ds_3d_view_edit_edge_delete)
-    register_class(ds_3d_view.ds_3d_view_edit_face_delete)
+    from . import space_info 
+    from . import space_view3d
 
-    from . import space_view3d 
-
+    register_class(space_info.INFO_HT_header)
     register_class(space_view3d.VIEW3D_HT_header)
-
-
 
 def unregister():
 
     from bpy.utils import unregister_class
-    
-    unregister_class(ds_3d_view_addon_prefs)
 
-    from . import ds_3d_view
+    unregister_class(ds_ui_addon_prefs)
 
-    unregister_class(ds_3d_view.ds_3d_view_menu_toggle)
-    unregister_class(ds_3d_view.ds_3d_view_viewpoints_toggle)
-    unregister_class(ds_3d_view.ds_3d_view_edit)
-    unregister_class(ds_3d_view.ds_3d_view_object)
+    unregister_class(ds_ui_quit)
 
-    unregister_class(ds_3d_view.ds_3d_view_select_all)
-    unregister_class(ds_3d_view.ds_3d_view_select_none)
+    from . import ds_ui
 
-    unregister_class(ds_3d_view.ds_3d_view_edit_vertex_delete)
-    unregister_class(ds_3d_view.ds_3d_view_edit_edge_delete)
-    unregister_class(ds_3d_view.ds_3d_view_edit_face_delete)
+    ds_ui.unregister()
 
-    from . import space_view3d 
+    from . import space_info 
+    from . import space_view3d
 
-    unregister_class(space_view3d.VIEW3D_HT_header)
+    unregister_class(space_info.INFO_HT_header)
+    unregister_class(space_view3d.VIEW3D_HT_header)    
 
-if __name__ == "__main__":
-
-	register()
