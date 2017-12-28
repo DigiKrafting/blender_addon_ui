@@ -17,7 +17,7 @@ Customised Blender UI (* WIP: Likely to be changed/tweaked)
 
 # Installation
 
-Download either the tar.gz or zip from [https://github.com/Digiography/blender_addon_3dview_toolbar/releases/latest](https://github.com/Digiography/blender_addon_3dview_toolbar/releases/latest)
+Download either the tar.gz or zip from [https://github.com/Digiography/blender_addon_ui/releases/latest](https://github.com/Digiography/blender_addon_ui/releases/latest)
 
 Installing an Addon in Blender
 
