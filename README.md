@@ -27,6 +27,4 @@ Installing an Addon in Blender
 
 # Screenshots
 
-![alt](/screenshots/3dview_prefs.png)
-
-![alt](/screenshots/3dview_toolbar.png)
+![alt](/screenshots/ui.png)
