@@ -4,10 +4,33 @@ Customised Blender UI (* WIP: Likely to be changed/tweaked)
 
 # Features
 
-## Customised Toolbars
-- Model
-- Rigging
-- UV
+- Customised Helper Menus and Toolbars
+- Default toolbars and menu's are accessible via a ">" toggle button
+- blender_addon_pipeline Intergration
+
+## Model
+
+- Meshes Selection Menu selects mesh and activates "Edit" mode
+- Add Mesh Menu
+- Mesh Menu
+- Vertices Menu displayed when "Vertice Select" is active
+- Edges Menu displayed when "Edge Select" is active
+- Faces Menu displayed when "Face Select" is active
+- Edit Mode button
+- Object Mode button
+- Sculpt Mode button
+
+## Rigging
+
+- Armatures Selection Menu
+- Armature Menu
+- Meshes Selection Menu selects mesh and activates "Weight Paint" mode
+- Vertex Groups Selection Menu when in "Weight Paint" mode
+
+## UV
+
+- Meshes Selection Menu selects mesh, activates "Edit" mode and selects all
+- UV Mapping Menu
 
 # Required Blender Version
 
@@ -28,3 +51,5 @@ Installing an Addon in Blender
 # Screenshots
 
 ![alt](/screenshots/ui.png)
+![alt](/screenshots/rigging.png)
+![alt](/screenshots/uv.png)

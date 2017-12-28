@@ -221,6 +221,10 @@ class INFO_HT_header(Header):
                 
                 layout.operator("wm.context_toggle", text="X-Ray", icon=_icon).data_path = "scene.objects.active.show_x_ray"
 
+        elif _ui_mode=='uv':
+
+            layout.menu("VIEW3D_MT_uv_map",icon='COLLAPSEMENU')
+    
         # UI Edit Mode
 
         if _ui_mode=='model':
