@@ -1,6 +1,6 @@
 # Blender Addon UI
 
-Customised Blender UI (* WIP: Likely to be changed/tweaked)
+Customised Blender UI focused on Modeling, Rigging and UV.
 
 # Features
 
@@ -23,13 +23,15 @@ Customised Blender UI (* WIP: Likely to be changed/tweaked)
 ## Rigging
 
 - Armatures Selection Menu
-- Armature Menu
 - Meshes Selection Menu selects mesh and activates "Weight Paint" mode
 - Vertex Groups Selection Menu when in "Weight Paint" mode
+- Edit Mode button
+- Armature Menu
 
 ## UV
 
 - Meshes Selection Menu selects mesh, activates "Edit" mode and selects all
+- Mesh Menu
 - UV Mapping Menu
 
 # Required Blender Version
