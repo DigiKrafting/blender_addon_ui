@@ -20,7 +20,7 @@ bl_info = {
         "name": "UI",
         "description": "UI Tweaks",
         "author": "Digiography.Studio",
-        "version": (0, 7, 0),
+        "version": (0, 7, 5),
         "blender": (2, 79, 0),
         "location": "Properties > Scene, Info Toolbar, 3D View Toolbar",
         "wiki_url":    "https://github.com/Digiography/blender_addon_pipeline/wiki",
@@ -145,7 +145,10 @@ class ds_ui_addon_prefs(bpy.types.AddonPreferences):
     option_view3d_select_tools_toggle = bpy.props.BoolProperty(name='Toggle',default=True,)
     option_view3d_select_tools_state = bpy.props.BoolProperty(name="state",default=False,)
 
-
+    option_active_armature = bpy.props.StringProperty(name="active_armature",default="",)
+    
+    active_object_name = bpy.props.StringProperty(name="active_object_name",default="",)
+    active_object_mode = bpy.props.StringProperty(name="active_object_mode",default="",)
 
     def draw(self, context):
 
@@ -176,8 +179,16 @@ def register():
     register_class(ds_ui_quit)
 
     from . import ds_ui
-
     ds_ui.register()
+
+    from . import ds_model
+    ds_model.register()
+
+    from . import ds_rigging
+    ds_rigging.register()
+
+    from . import ds_uv
+    ds_uv.register()
 
     from . import space_info 
     from . import space_view3d
@@ -194,8 +205,16 @@ def unregister():
     unregister_class(ds_ui_quit)
 
     from . import ds_ui
-
     ds_ui.unregister()
+
+    from . import ds_model
+    ds_model.unregister()
+
+    from . import ds_rigging
+    ds_rigging.unregister()
+
+    from . import ds_uv
+    ds_uv.unregister()
 
     from . import space_info 
     from . import space_view3d

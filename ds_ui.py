@@ -20,32 +20,66 @@ import bpy
 
 from os import path, makedirs
 
-import bmesh
+# Menus
 
-def bmesh_vert_active(mesh_data):
-    bm = bmesh.from_edit_mesh(mesh_data)
-    if bm.select_history:
-        elem = bm.select_history[-1]
-        if isinstance(elem, bmesh.types.BMVert):
-            return True
-    return False
+class menu_pivot(bpy.types.Menu):
+    bl_label = " Pivot"
+    bl_idname = "ds_ui.menu_pivot"
+    def draw(self, context):
 
-def bmesh_edge_active(mesh_data):
-    bm = bmesh.from_edit_mesh(mesh_data)
-    if bm.select_history:
-        elem = bm.select_history[-1]
-        if isinstance(elem, bmesh.types.BMEdge):
-            return True
-    return False
+        layout = self.layout
+        layout.operator('ds_ui.pivot_active_element',icon='ROTACTIVE',text="Active Element")
+        layout.operator('ds_ui.pivot_median_point',icon='ROTATECENTER',text="Median Point")
+        layout.operator('ds_ui.pivot_individual_origins',icon='ROTATECOLLECTION',text="Individual Origins")
+        layout.operator('ds_ui.pivot_cursor',icon='CURSOR',text="3d Cursor")
+        layout.operator('ds_ui.pivot_bounding_box_center',icon='ROTATE',text="Bounding Box Center")
 
-def bmesh_face_active(mesh_data):
-    bm = bmesh.from_edit_mesh(mesh_data)
-    if bm.select_history:
-        elem = bm.select_history[-1]
-        if isinstance(elem, bmesh.types.BMFace):
-            return True
-    return False
+class menu_shade(bpy.types.Menu):
+    bl_label = " Shade"
+    bl_idname = "ds_ui.menu_shade"
+    def draw(self, context):
 
+        layout = self.layout
+        layout.operator("ds_ui.shade", text="Rendered", icon='SMOOTH').option_value='RENDERED'
+        layout.operator("ds_ui.shade", text="Wireframe", icon='WIRE').option_value='WIREFRAME'
+        layout.operator("ds_ui.shade", text="Solid", icon='SOLID').option_value='SOLID'
+        layout.operator("ds_ui.shade", text="Material", icon='MATERIAL').option_value='MATERIAL'
+
+class menu_viewpoints(bpy.types.Menu):
+    bl_label = " View"
+    bl_idname = "ds_ui.menu_viewpoints"
+    def draw(self, context):
+
+        layout = self.layout
+
+        layout.operator("view3d.viewnumpad", text="Top", icon='TRIA_UP').type = 'TOP'
+        layout.operator("view3d.viewnumpad", text="Bottom", icon='TRIA_DOWN').type = 'BOTTOM'
+        layout.operator("view3d.viewnumpad", text="Front", icon='ARROW_LEFTRIGHT').type = 'FRONT'
+        layout.operator("view3d.viewnumpad", text="Back", icon='ARROW_LEFTRIGHT').type = 'BACK'
+        layout.operator("view3d.viewnumpad", text="Right", icon='TRIA_RIGHT').type = 'RIGHT'
+        layout.operator("view3d.viewnumpad", text="Left", icon='TRIA_LEFT').type = 'LEFT'
+
+        layout.operator("view3d.viewnumpad", text="Camera", icon='CAMERA_DATA').type = 'CAMERA'
+
+class menu_edges(bpy.types.Menu):
+    bl_label = " Edge"
+    bl_idname = "ds_ui.menu_edges"
+    def draw(self, context):
+
+        layout = self.layout
+
+        _mesh=bpy.context.active_object.data
+        _selected_edges = [v for v in _mesh.edges if v.select]
+        if _selected_edges:
+
+            layout.operator("mesh.loop_multi_select", text='Loop',icon="EDGESEL").ring=False
+            layout.operator("mesh.loop_multi_select", text='Ring',icon="SNAP_EDGE").ring=True
+            layout.operator('mesh.bevel',text="Bevel",icon="MOD_BEVEL").vertex_only=False
+
+        layout.operator('mesh.subdivide',icon="MOD_EDGESPLIT")
+        layout.operator('mesh.unsubdivide',icon="MOD_EDGESPLIT")
+
+# Globals
 
 def option_show(option_name):
 
@@ -93,6 +127,35 @@ def toggle_draw(option_name):
     else:
         return False
 
+class toggle_set(bpy.types.Operator):
+
+    bl_idname = "ds_ui.toggle"
+    bl_label = "Toggle"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    option_toggle = bpy.props.StringProperty(
+        name="toggle",
+        default = 'transform'
+    )
+    def execute(self, context):
+
+        _param=self.option_toggle
+
+        if hasattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state'):
+            
+            if not getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state'):
+                setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state',True)
+            else:
+                setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state',False)
+
+        return {'FINISHED'}    
+
+def ui_mode():
+
+    return getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_ui_mode')
+
+# UI
+
 class save(bpy.types.Operator):
 
     bl_idname = "ds_ui.save"
@@ -124,33 +187,14 @@ class redo(bpy.types.Operator):
         bpy.ops.ed.redo()
         return {'FINISHED'}
 
-class toggle_set(bpy.types.Operator):
+# Functions
 
-    bl_idname = "ds_ui.toggle"
-    bl_label = "Toggle"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    option_toggle = bpy.props.StringProperty(
-        name="toggle",
-        default = 'transform'
-    )
+class show_node_editor(bpy.types.Operator):
+    bl_idname = "ds_ui.show_node_editor"
+    bl_label = "Node Editor"
     def execute(self, context):
-
-        _param=self.option_toggle
-
-        if hasattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state'):
-            
-            if not getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state'):
-                setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state',True)
-            else:
-                setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_'+_param+'_state',False)
-
-        return {'FINISHED'}    
-
-def ui_mode():
-
-    return getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_ui_mode')
-
+        bpy.context.area.type = 'NODE_EDITOR'
+        return {'FINISHED'}
 
 class ui_layout_set_object(bpy.types.Operator):
 
@@ -180,8 +224,6 @@ class ui_layout_set_object(bpy.types.Operator):
                     bpy.ops.view3d.toolshelf(context_copy)
 
                 break
-
-
 
         return {'FINISHED'}    
 
@@ -216,360 +258,7 @@ class ui_layout_set_sculpt(bpy.types.Operator):
 
         return {'FINISHED'}    
 
-class ui_layout_set_weightpaint(bpy.types.Operator):
 
-    bl_idname = "ds_ui.ui_layout_set_weightpaint"
-    bl_label = "WEIGHT PAINT"
-
-    def execute(self, context):
-            
-        #layout.operator('object.mode_set',text="Weight Paint",icon="WPAINT_HLT").mode='WEIGHT_PAINT'
-
-
-        return {'FINISHED'}    
-
-class ui_layout_set(bpy.types.Operator):
-
-    bl_idname = "ds_ui.ui_layout_set"
-    bl_label = "Toggle"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    option_value = bpy.props.StringProperty(
-        name="option_value",
-        default = ''
-    )
-    def execute(self, context):
-
-        setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_ui_mode',self.option_value)
-
-        #if bpy.context.active_object:
-
-        #   if bpy.context.active_object.mode=='EDIT':
-        #        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
-        if self.option_value=='model':
-            
-            if bpy.context.scene.objects.active:
-                bpy.context.scene.objects.active.show_x_ray=False
-            bpy.context.window.screen = bpy.data.screens['Default']
-
-            for ob in context.scene.objects:
-                if ob.type == 'ARMATURE':
-                    ob.hide=True
-
-            _selected=False
-            for ob in bpy.context.selected_objects:
-                if ob.type == 'MESH':
-                    _selected=True
-
-            if not _selected:
-                
-                if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select'):
-                    bpy.ops.object.select_all(action='DESELECT')
-                    for ob in context.scene.objects:
-                        if ob.type == 'MESH':
-                            context.scene.objects.active = ob
-                            ob.select = True
-                            if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_edit'):
-                                bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-                            if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_all'):
-                                bpy.ops.mesh.select_all(action='SELECT')
-                            else:        
-                                bpy.ops.mesh.select_all(action='DESELECT')
-                            break
-
-            elif bpy.context.active_object and bpy.context.active_object.type == 'MESH':
-
-                if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_edit'):
-                    bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-
-                if bpy.context.active_object.mode=='EDIT':
-
-                    if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_all'):
-                        bpy.ops.mesh.select_all(action='SELECT')
-                    else:        
-                        bpy.ops.mesh.select_all(action='DESELECT')
-
-        elif self.option_value=='rig':
-
-            bpy.context.window.screen = bpy.data.screens['Default']
-
-            for ob in context.scene.objects:
-                if ob.type == 'ARMATURE':
-                    ob.hide=False
-
-            _selected=False
-            for ob in bpy.context.selected_objects:
-                if ob.type == 'ARMATURE':
-                    _selected=True
-
-            if not _selected:
-
-                if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_armature_select'):
-                    for ob in context.scene.objects:
-                        if ob.type == 'ARMATURE':
-                            context.scene.objects.active = ob
-                            ob.select = True
-                            break
-
-            if bpy.context.scene.objects.active:
-                bpy.context.scene.objects.active.show_x_ray=True
-
-        elif self.option_value=='uv':
-
-            if bpy.context.scene.objects.active:
-                bpy.context.scene.objects.active.show_x_ray=False
-            bpy.context.window.screen = bpy.data.screens['UV Editing']
-
-            if not len(bpy.context.selected_objects):
-
-                if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_uv_select'):
-                    bpy.ops.object.select_all(action='DESELECT')
-                    for ob in context.scene.objects:
-                        if ob.type == 'MESH':
-                            context.scene.objects.active = ob
-                            ob.select = True
-                            if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_uv_select_edit'):
-                                bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-                            if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_uv_select_all'):
-                                bpy.ops.mesh.select_all(action='SELECT')
-                            else:        
-                                bpy.ops.mesh.select_all(action='DESELECT')
-                            break
-            elif bpy.context.active_object and bpy.context.active_object.type == 'MESH':
-
-                if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_edit'):
-                    bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-
-                if bpy.context.active_object.mode=='EDIT':
-
-                    if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_all'):
-                        bpy.ops.mesh.select_all(action='SELECT')
-                    else:        
-                        bpy.ops.mesh.select_all(action='DESELECT')
-
-        return {'FINISHED'}    
-
-class info_mesh_edit_select(bpy.types.Operator):
-    bl_label = "Mesh Select"
-    bl_idname = "ds_ui.info_mesh_edit_select"
-    option_value = bpy.props.StringProperty(
-        name="option_value",
-        default = ''
-    )
-    def execute(self, context):
-
-
-        if bpy.context.active_object:
-
-            if bpy.context.active_object.mode=='EDIT':
-                bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-        
-        ob = bpy.data.objects.get(self.option_value)
-        context.scene.objects.active = ob
-        ob.select = True
-        
-        if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_edit'):
-            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-        if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_mesh_select_all'):
-            bpy.ops.mesh.select_all(action='SELECT')
-        else:        
-            bpy.ops.mesh.select_all(action='DESELECT')
-
-        return {'FINISHED'}    
-
-class info_mesh_select(bpy.types.Operator):
-    bl_label = "Mesh Select"
-    bl_idname = "ds_ui.info_mesh_select"
-    option_value = bpy.props.StringProperty(
-        name="option_value",
-        default = ''
-    )
-    def execute(self, context):
-
-
-        if bpy.context.active_object:
-
-            if bpy.context.active_object.mode=='EDIT':
-                bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-        
-        ob = bpy.data.objects.get(self.option_value)
-        context.scene.objects.active = ob
-        ob.select = True
-
-        bpy.ops.object.mode_set(mode='WEIGHT_PAINT', toggle=False)
-        
-        return {'FINISHED'}    
-
-
-class info_meshes_edit_menu(bpy.types.Menu):
-    bl_label = "Meshes"
-    bl_idname = "ds_ui.info_meshes_edit_menu"
-    def draw(self, context):
-        layout = self.layout
-        for ob in context.scene.objects:
-            if ob.type == 'MESH':
-                layout.operator('ds_ui.info_mesh_edit_select',text=ob.name).option_value=ob.name
-
-class info_meshes_menu(bpy.types.Menu):
-    bl_label = "Meshes"
-    bl_idname = "ds_ui.info_meshes_menu"
-    def draw(self, context):
-        layout = self.layout
-        for ob in context.scene.objects:
-            if ob.type == 'MESH':
-                layout.operator('ds_ui.info_mesh_select',text=ob.name).option_value=ob.name
-
-
-class info_armature_select(bpy.types.Operator):
-    bl_label = "Armature Select"
-    bl_idname = "ds_ui.info_armature_select"
-    option_value = bpy.props.StringProperty(
-        name="option_value",
-        default = ''
-    )
-    def execute(self, context):
-
-        if bpy.context.active_object and bpy.context.active_object.mode=='OBJECT':
-            bpy.ops.object.select_all(action='DESELECT')
-        
-        ob = bpy.data.objects.get(self.option_value)
-        context.scene.objects.active = ob
-        ob.select = True
-        
-        if bpy.context.active_object.mode!='POSE':
-            bpy.ops.object.mode_set(mode='POSE', toggle=False)
-
-        return {'FINISHED'}    
-
-
-class info_vertex_groups_menu(bpy.types.Menu):
-    bl_label = "Vertex Groups"
-    bl_idname = "ds_ui.info_vertex_groups_menu"
-    def draw(self, context):
-        layout = self.layout
-        ob=bpy.context.active_object
-        for group in ob.vertex_groups:
-            layout.operator('ds_ui.info_vertex_groups_select',text=group.name).option_value=group.name
-
-class info_armatures_menu(bpy.types.Menu):
-    bl_label = "Armatures"
-    bl_idname = "ds_ui.info_armatures_menu"
-    def draw(self, context):
-        layout = self.layout
-        for ob in context.scene.objects:
-            if ob.type == 'ARMATURE':
-                layout.operator('ds_ui.info_armature_select',text=ob.name).option_value=ob.name
-
-class info_vertex_groups_select(bpy.types.Operator):
-    bl_label = "Vertex Group Select"
-    bl_idname = "ds_ui.info_vertex_groups_select"
-    option_value = bpy.props.StringProperty(
-        name="option_value",
-        default = ''
-    )
-    def execute(self, context):
-
-        vgroups = bpy.context.object.vertex_groups
-        vgroups.active_index = vgroups[self.option_value].index
-        
-        return {'FINISHED'}    
-
-class info_uv_select(bpy.types.Operator):
-    bl_label = "UV Select"
-    bl_idname = "ds_ui.info_uv_select"
-    option_value = bpy.props.StringProperty(
-        name="option_value",
-        default = ''
-    )
-    def execute(self, context):
-
-        if bpy.context.active_object:
-
-            if bpy.context.active_object.mode=='EDIT':
-                bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-        
-        ob = bpy.data.objects.get(self.option_value)
-        context.scene.objects.active = ob
-        ob.select = True
-
-        if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_uv_select_edit'):
-            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-        if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_info_uv_select_all'):
-            bpy.ops.mesh.select_all(action='SELECT')
-        else:        
-            bpy.ops.mesh.select_all(action='DESELECT')
-
-        return {'FINISHED'}    
-
-class info_uv_menu(bpy.types.Menu):
-    bl_label = "Meshes"
-    bl_idname = "ds_ui.info_uv_menu"
-    def draw(self, context):
-        layout = self.layout
-        for ob in context.scene.objects:
-            if ob.type == 'MESH':
-                layout.operator('ds_ui.info_uv_select',text=ob.name).option_value=ob.name
-
-class view3d_viewpoints_menu(bpy.types.Menu):
-    bl_label = " View"
-    bl_idname = "ds_ui.view3d_viewpoints_menu"
-    def draw(self, context):
-
-        layout = self.layout
-
-        layout.operator("view3d.viewnumpad", text="Top", icon='TRIA_UP').type = 'TOP'
-        layout.operator("view3d.viewnumpad", text="Bottom", icon='TRIA_DOWN').type = 'BOTTOM'
-        layout.operator("view3d.viewnumpad", text="Front", icon='ARROW_LEFTRIGHT').type = 'FRONT'
-        layout.operator("view3d.viewnumpad", text="Back", icon='ARROW_LEFTRIGHT').type = 'BACK'
-        layout.operator("view3d.viewnumpad", text="Right", icon='TRIA_RIGHT').type = 'RIGHT'
-        layout.operator("view3d.viewnumpad", text="Left", icon='TRIA_LEFT').type = 'LEFT'
-
-        layout.operator("view3d.viewnumpad", text="Camera", icon='CAMERA_DATA').type = 'CAMERA'
-
-
-class view3d_edges_menu(bpy.types.Menu):
-    bl_label = " Edge"
-    bl_idname = "ds_ui.view3d_edges_menu"
-    def draw(self, context):
-
-        layout = self.layout
-
-        _mesh=bpy.context.active_object.data
-        _selected_edges = [v for v in _mesh.edges if v.select]
-        if _selected_edges:
-
-            layout.operator("mesh.loop_multi_select", text='Loop',icon="EDGESEL").ring=False
-            layout.operator("mesh.loop_multi_select", text='Ring',icon="SNAP_EDGE").ring=True
-            layout.operator('mesh.bevel',text="Bevel",icon="MOD_BEVEL").vertex_only=False
-
-        layout.operator('mesh.subdivide',icon="MOD_EDGESPLIT")
-        layout.operator('mesh.unsubdivide',icon="MOD_EDGESPLIT")
-
-
-class view3d_select_mode_edge(bpy.types.Operator):
-    bl_label = "Edge Select"
-    bl_idname = "ds_ui.view3d_select_mode_edge"
-    def execute(self, context):
-        
-        setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_view3d_edges_state',True)
-        setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_view3d_faces_state',False)
-
-        bpy.ops.mesh.select_mode(type="EDGE")
-        
-        return {'FINISHED'}    
-
-class view3d_select_mode_face(bpy.types.Operator):
-    bl_label = "Face Select"
-    bl_idname = "ds_ui.view3d_select_mode_face"
-    def execute(self, context):
-        
-        setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_view3d_edges_state',False)
-        setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_view3d_faces_state',True)
-
-        bpy.ops.mesh.select_mode(type="FACE")
-        
-        return {'FINISHED'}   
 
 class shade(bpy.types.Operator):
     bl_idname = "ds_ui.shade"
@@ -609,50 +298,6 @@ class select_none(bpy.types.Operator):
                     ob.select = False
         elif bpy.context.active_object.mode=='EDIT':
             bpy.ops.mesh.select_all(action='DESELECT')
-        return {'FINISHED'}
-
-class primitives(bpy.types.Operator):
-    bl_idname = "ds_ui.primitives"
-    bl_label = "ds_ui.primitives"
-    option_shape = bpy.props.StringProperty(
-        name="shape",
-        default = 'cube'
-    )    
-    def execute(self, context):
-
-        if self.option_shape=='plane':
-            bpy.ops.mesh.primitive_plane_add()
-        elif self.option_shape=='circle':
-            bpy.ops.mesh.primitive_circle_add()
-        elif self.option_shape=='cube':
-            bpy.ops.mesh.primitive_cube_add()
-        elif self.option_shape=='uv_sphere':
-            bpy.ops.mesh.primitive_uv_sphere_add()
-        elif self.option_shape=='cylinder':
-            bpy.ops.mesh.primitive_cylinder_add()
-        elif self.option_shape=='cone':
-            bpy.ops.mesh.primitive_cone_add()
-        elif self.option_shape=='torus':
-            bpy.ops.mesh.primitive_torus_add()
-
-        #if getattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_show_primitives_close'):
-        #    setattr(bpy.context.user_preferences.addons[__package__].preferences, 'option_show_primitives_toggle_state',False)
-
-        return {'FINISHED'}
-
-class uv_unwrap(bpy.types.Operator):
-    bl_idname = "ds_ui.uv_unwrap"
-    bl_label = "ds_ui.uv_unwrap"
-    def execute(self, context):
-        select_all.execute(self, context)
-        bpy.ops.uv.unwrap()
-        return {'FINISHED'}
-
-class transform_apply(bpy.types.Operator):
-    bl_idname = "ds_ui.transform_apply"
-    bl_label = "ds_ui.transform_apply"
-    def execute(self, context):
-        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
         return {'FINISHED'}
 
 class manipulator_none(bpy.types.Operator):
@@ -700,48 +345,6 @@ class manipulator_increase(bpy.types.Operator):
         bpy.context.user_preferences.view.manipulator_size = bpy.context.user_preferences.view.manipulator_size + 10
         return {'FINISHED'}
 
-class edit_mesh_extrude_x(bpy.types.Operator):
-    bl_idname = "ds_ui.edit_mesh_extrude_x"
-    bl_label = "ds_ui.edit_mesh_extrude_x"
-    def execute(self, context):  
-        bpy.ops.mesh.extrude_region_move('INVOKE_REGION_WIN',TRANSFORM_OT_translate={"constraint_orientation": 'NORMAL',"constraint_axis": (True, False, False)})
-        return {'FINISHED'}
-
-class edit_mesh_extrude_y(bpy.types.Operator):
-    bl_idname = "ds_ui.edit_mesh_extrude_y"
-    bl_label = "ds_ui.edit_mesh_extrude_y"
-    def execute(self, context):  
-        bpy.ops.mesh.extrude_region_move('INVOKE_REGION_WIN',TRANSFORM_OT_translate={"constraint_orientation": 'NORMAL',"constraint_axis": (False, True, False)})
-        return {'FINISHED'}
-
-class edit_mesh_extrude_z(bpy.types.Operator):
-    bl_idname = "ds_ui.edit_mesh_extrude_z"
-    bl_label = "ds_ui.edit_mesh_extrude_z"
-    def execute(self, context):  
-        bpy.ops.mesh.extrude_region_move('INVOKE_REGION_WIN',TRANSFORM_OT_translate={"constraint_orientation": 'NORMAL',"constraint_axis": (False, False, True)})
-        return {'FINISHED'}
-
-class edit_armature_extrude_x(bpy.types.Operator):
-    bl_idname = "ds_ui.edit_armature_extrude_x"
-    bl_label = "ds_ui.edit_armature_extrude_x"
-    def execute(self, context):  
-        bpy.ops.armature.extrude_move('INVOKE_REGION_WIN',TRANSFORM_OT_translate={"constraint_orientation": 'NORMAL',"constraint_axis": (True, False, False)})
-        return {'FINISHED'}
-
-class edit_armature_extrude_y(bpy.types.Operator):
-    bl_idname = "ds_ui.edit_armature_extrude_y"
-    bl_label = "ds_ui.edit_armature_extrude_y"
-    def execute(self, context):  
-        bpy.ops.armature.extrude_move('INVOKE_REGION_WIN',TRANSFORM_OT_translate={"constraint_orientation": 'NORMAL',"constraint_axis": (False, True, False)})
-        return {'FINISHED'}
-
-class edit_armature_extrude_z(bpy.types.Operator):
-    bl_idname = "ds_ui.edit_armature_extrude_z"
-    bl_label = "ds_ui.edit_armature_extrude_z"
-    def execute(self, context):  
-        bpy.ops.armature.extrude_move('INVOKE_REGION_WIN',TRANSFORM_OT_translate={"constraint_orientation": 'NORMAL',"constraint_axis": (False, False, True)})
-        return {'FINISHED'}
-
 class pivot_active_element(bpy.types.Operator):
     bl_idname = "ds_ui.pivot_active_element"
     bl_label = "ds_ui.pivot_active_element"
@@ -777,151 +380,6 @@ class pivot_bounding_box_center(bpy.types.Operator):
         bpy.context.space_data.pivot_point = 'BOUNDING_BOX_CENTER'
         return {'FINISHED'}
 
-class view3d_pivot_menu(bpy.types.Menu):
-    bl_label = " Pivot"
-    bl_idname = "ds_ui.view3d_pivot_menu"
-    def draw(self, context):
-
-        layout = self.layout
-        layout.operator('ds_ui.pivot_active_element',icon='ROTACTIVE',text="Active Element")
-        layout.operator('ds_ui.pivot_median_point',icon='ROTATECENTER',text="Median Point")
-        layout.operator('ds_ui.pivot_individual_origins',icon='ROTATECOLLECTION',text="Individual Origins")
-        layout.operator('ds_ui.pivot_cursor',icon='CURSOR',text="3d Cursor")
-        layout.operator('ds_ui.pivot_bounding_box_center',icon='ROTATE',text="Bounding Box Center")
-
-class view3d_shade_menu(bpy.types.Menu):
-    bl_label = " Shade"
-    bl_idname = "ds_ui.view3d_shade_menu"
-    def draw(self, context):
-
-        layout = self.layout
-        layout.operator("ds_ui.shade", text="Rendered", icon='SMOOTH').option_value='RENDERED'
-        layout.operator("ds_ui.shade", text="Wireframe", icon='WIRE').option_value='WIREFRAME'
-        layout.operator("ds_ui.shade", text="Solid", icon='SOLID').option_value='SOLID'
-        layout.operator("ds_ui.shade", text="Material", icon='MATERIAL').option_value='MATERIAL'
-
-class view3d_weight_paint_set_brush(bpy.types.Operator):
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush"
-    option_value = bpy.props.StringProperty(
-        name="option_value",
-        default = ''
-    )
-    def execute(self, context):
-
-        layout = self.layout
-       
-        context.tool_settings.weight_paint.brush = bpy.data.brushes[self.option_value]
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_weight_inc(bpy.types.Operator):
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_weight_inc"
-  
-    def execute(self, context):
-
-        if bpy.context.scene.tool_settings.unified_paint_settings.weight < 1:
-
-            bpy.context.scene.tool_settings.unified_paint_settings.weight=bpy.context.scene.tool_settings.unified_paint_settings.weight+0.15
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_weight_dec(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_weight_dec"
-
-    def execute(self, context):
-
-        if bpy.context.scene.tool_settings.unified_paint_settings.weight > 0.15:
-
-            bpy.context.scene.tool_settings.unified_paint_settings.weight=bpy.context.scene.tool_settings.unified_paint_settings.weight-0.15
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_weight_default(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_weight_default"
-  
-    def execute(self, context):
-
-        bpy.context.scene.tool_settings.unified_paint_settings.weight=1.0
-
-        return {'FINISHED'}  
-
-class view3d_weight_paint_set_brush_radius_inc(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_radius_inc"
-  
-    def execute(self, context):
-
-        if bpy.context.scene.tool_settings.unified_paint_settings.size < 500:
-            bpy.context.scene.tool_settings.unified_paint_settings.size=bpy.context.scene.tool_settings.unified_paint_settings.size+10
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_radius_dec(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_radius_dec"
-  
-    def execute(self, context):
-
-        if bpy.context.scene.tool_settings.unified_paint_settings.size > 10:
-            bpy.context.scene.tool_settings.unified_paint_settings.size=bpy.context.scene.tool_settings.unified_paint_settings.size-10
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_radius_default(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_radius_default"
-  
-    def execute(self, context):
-
-        bpy.context.scene.tool_settings.unified_paint_settings.size=35
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_strength_inc(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_strength_inc"
-  
-    def execute(self, context):
-
-        if context.tool_settings.weight_paint.brush.strength < 1:
-            context.tool_settings.weight_paint.brush.strength=context.tool_settings.weight_paint.brush.strength+0.100
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_strength_dec(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_strength_dec"
-  
-    def execute(self, context):
-
-        if context.tool_settings.weight_paint.brush.strength > 0:
-            context.tool_settings.weight_paint.brush.strength=context.tool_settings.weight_paint.brush.strength-0.100
-
-        return {'FINISHED'}    
-
-class view3d_weight_paint_set_brush_strength_default(bpy.types.Operator):
-
-    bl_label = "Set Brush"
-    bl_idname = "ds_ui.view3d_weight_paint_set_brush_strength_default"
-  
-    def execute(self, context):
-
-        context.tool_settings.weight_paint.brush.strength=0.200
-
-        return {'FINISHED'} 
-
-from os import path, makedirs
 
 def ds_fbx_export(self, context):
 
@@ -945,40 +403,132 @@ def ds_fbx_export(self, context):
     
     return export_file
 
+def blender_addon_pipeline(layout):
+
+    if 'blender_addon_zbrushcore' in bpy.context.user_preferences.addons:
+
+        layout.operator('ds_zbc.export',text="ZBC",icon="EXPORT")
+        layout.operator('ds_zbc.import',text="ZBC",icon="IMPORT")
+
+    if 'blender_addon_unfold3d' in bpy.context.user_preferences.addons:
+
+        layout.operator('ds_u3d.export',text="U3D",icon="EXPORT")
+        layout.operator('ds_u3d.import',text="U3D",icon="IMPORT")
+
+    if 'blender_addon_substance_painter' in bpy.context.user_preferences.addons:
+
+        if bpy.context.user_preferences.addons['blender_addon_substance_painter'].preferences.option_show_sp_toggle:
+
+            layout.operator('ds_sp.toggle',icon='TRIA_RIGHT')
+
+        if (not bpy.context.user_preferences.addons['blender_addon_substance_painter'].preferences.option_show_sp_toggle) or (bpy.context.user_preferences.addons['blender_addon_substance_painter'].preferences.option_show_sp_toggle and bpy.context.user_preferences.addons['blender_addon_substance_painter'].preferences.option_show_sp_toggle_state):
+
+            layout.operator('ds_sp.export_scene',text="SP:Scene",icon="EXPORT")
+            layout.operator('ds_sp.pbr_nodes', text='SP:Scene',icon="IMPORT").import_setting = 'scene'
+            layout.operator('ds_sp.export_sel',text="SP:Sel",icon="EXPORT")
+            layout.operator('ds_sp.pbr_nodes', text='SP:Sel',icon="IMPORT").import_setting = 'selected'
+
+    if 'blender_addon_iclone' in bpy.context.user_preferences.addons:
+
+        if bpy.context.user_preferences.addons['blender_addon_iclone'].preferences.option_show_iclone_toggle:
+
+            layout.operator('ds_ic.toggle',icon='TRIA_RIGHT')
+        
+        if (not bpy.context.user_preferences.addons['blender_addon_iclone'].preferences.option_show_iclone_toggle) or (bpy.context.user_preferences.addons['blender_addon_iclone'].preferences.option_show_iclone_toggle and bpy.context.user_preferences.addons['blender_addon_iclone'].preferences.option_show_iclone_toggle_state):
+
+            layout.operator('ds_ic.export_cc',text="CC",icon="EXPORT")
+            layout.operator('ds_ic.export_3dx',text="3DX",icon="EXPORT")
+
+            layout.operator('ds_ic.import_base',text="Base",icon="IMPORT")
+            layout.operator('ds_ic.import_female',text="Female",icon="IMPORT")
+            layout.operator('ds_ic.import_male',text="Male",icon="IMPORT")
+
+            layout.operator('ds_ic.export_ic',text="IC",icon="LINK_BLEND")
+
+def tools(context, layout):
+
+    _obj_mode = context.mode
+    _obj = context.active_object
+
+    if _obj:
+
+        layout.menu("VIEW3D_MT_object",icon='COLLAPSEMENU',text="")
+
+    layout.menu('ds_ui.menu_viewpoints',icon="CURSOR",text='')
+    layout.operator('screen.region_quadview',icon='MOD_LATTICE',text="")
+    layout.operator('view3d.view_selected',icon='ZOOM_SELECTED',text="")
+    layout.operator('view3d.localview',icon='RESTRICT_VIEW_OFF',text="")
+    layout.operator('view3d.view_persportho',icon='ORTHO',text="")
+    layout.operator('view3d.zoom_border', text="",icon='BORDERMOVE')
+
+    _icon="FORCE_FORCE"
+    _shade=bpy.context.space_data.viewport_shade
+    if _shade=='RENDERED':
+        _icon='SMOOTH'
+    elif _shade=='WIREFRAME':
+        _icon='WIRE'
+    elif _shade=='SOLID':
+        _icon='SOLID'
+    elif _shade=='MATERIAL':
+        _icon='MATERIAL'
+    layout.menu('ds_ui.menu_shade',icon=_icon,text='')
+
+    _icon="FORCE_FORCE"
+    _pivot=bpy.context.space_data.pivot_point
+    if _pivot == 'ACTIVE_ELEMENT':
+        _icon='ROTACTIVE'
+    elif _pivot == 'MEDIAN_POINT':
+        _icon='ROTATECENTER'
+    elif _pivot == 'INDIVIDUAL_ORIGINS':
+        _icon='ROTATECOLLECTION'
+    elif _pivot == 'CURSOR':
+        _icon='CURSOR'
+    elif _pivot == 'BOUNDING_BOX_CENTER':
+        _icon='ROTATE'
+    layout.menu('ds_ui.menu_pivot',icon=_icon,text='')
+
+#        layout.operator("transform.translate",icon='MAN_TRANS', text="")
+    view = context.space_data
+
+    # if (( (_obj_mode == 'PARTICLE_EDIT' or (_obj_mode == 'EDIT' and _obj.type == 'MESH'))) or (_obj_mode == 'WEIGHT_PAINT')):
+    
+    layout.prop(view, "use_occlude_geometry", text="")
+
+    layout.operator('ds_ui.select_all', text="",icon='RESTRICT_COLOR_ON')
+    layout.operator('ds_ui.select_none', text="",icon='RESTRICT_COLOR_OFF')
+
+    layout.operator("view3d.select_border", text='',icon='BORDER_RECT')
+    layout.operator("view3d.select_circle", text='',icon='BORDER_LASSO')
+
+    layout.operator("object.select_less", text='',icon='DISCLOSURE_TRI_DOWN')
+    layout.operator("object.select_more", text='',icon='DISCLOSURE_TRI_RIGHT')
+
+def tools_transform(context, layout):
+
+    layout.operator("transform.translate",icon='MAN_TRANS', text="")
+    layout.operator("transform.rotate", icon='ROTATE', text="")
+    layout.operator("transform.resize", icon='MAN_SCALE', text="")
+    
+    layout.operator("ds_ui.manipulator_decrease", icon='ZOOMOUT', text='')
+    layout.operator("ds_ui.manipulator_none", icon='MANIPUL', text='')
+    layout.operator("ds_ui.manipulator_move", icon='MAN_TRANS', text='')
+    layout.operator("ds_ui.manipulator_rotate", icon='MAN_ROT', text='')
+    layout.operator("ds_ui.manipulator_scale", icon='MAN_SCALE', text='')
+    layout.operator("ds_ui.manipulator_increase", icon='ZOOMIN', text='')
+
 def register():
 
     from bpy.utils import register_class
 
-    register_class(primitives)
     register_class(select_all)
     register_class(select_none)
 
     register_class(toggle_set)
-    register_class(ui_layout_set)
-    register_class(info_mesh_select)
-    register_class(info_meshes_menu)
-    register_class(info_mesh_edit_select)
-    register_class(info_meshes_edit_menu)
-    register_class(info_armature_select)
-    register_class(info_armatures_menu)
-    register_class(info_vertex_groups_select)
-    register_class(info_vertex_groups_menu)
-    register_class(info_uv_select)
-    register_class(info_uv_menu)
+
     register_class(save)
     register_class(undo)
     register_class(redo)
     register_class(shade)
-
-    register_class(uv_unwrap)
-
-    register_class(edit_mesh_extrude_x)
-    register_class(edit_mesh_extrude_y)
-    register_class(edit_mesh_extrude_z)
-
-    register_class(edit_armature_extrude_x)
-    register_class(edit_armature_extrude_y)
-    register_class(edit_armature_extrude_z)
 
     register_class(manipulator_none)
     register_class(manipulator_move)
@@ -993,64 +543,31 @@ def register():
     register_class(pivot_cursor)
     register_class(pivot_bounding_box_center)
 
-    register_class(view3d_viewpoints_menu)
-    register_class(view3d_edges_menu)
-    register_class(view3d_pivot_menu)
-    register_class(view3d_shade_menu)
+    register_class(menu_viewpoints)
+    register_class(menu_edges)
+    register_class(menu_pivot)
+    register_class(menu_shade)
 
-    register_class(view3d_select_mode_edge)
-    register_class(view3d_select_mode_face)
-
-    register_class(transform_apply)
     register_class(ui_layout_set_sculpt)
     register_class(ui_layout_set_object)
-    register_class(ui_layout_set_weightpaint)
     
-    register_class(view3d_weight_paint_set_brush)
-    register_class(view3d_weight_paint_set_brush_weight_inc)
-    register_class(view3d_weight_paint_set_brush_weight_dec)
-    register_class(view3d_weight_paint_set_brush_weight_default)
-    register_class(view3d_weight_paint_set_brush_radius_inc)
-    register_class(view3d_weight_paint_set_brush_radius_dec)
-    register_class(view3d_weight_paint_set_brush_radius_default)    
-    register_class(view3d_weight_paint_set_brush_strength_inc)
-    register_class(view3d_weight_paint_set_brush_strength_dec)
-    register_class(view3d_weight_paint_set_brush_strength_default)
+
+
+    register_class(show_node_editor)
 
 def unregister():
 
     from bpy.utils import unregister_class
 
-    unregister_class(primitives)
     unregister_class(select_all)
     unregister_class(select_none)
 
     unregister_class(toggle_set)
-    unregister_class(ui_layout_set)
-    unregister_class(info_mesh_select)
-    unregister_class(info_meshes_menu)
-    unregister_class(info_mesh_edit_select)
-    unregister_class(info_meshes_edit_menu)
-    unregister_class(info_armature_select)
-    unregister_class(info_armatures_menu)
-    unregister_class(info_vertex_groups_select)
-    unregister_class(info_vertex_groups_menu)
-    unregister_class(info_uv_select)
-    unregister_class(info_uv_menu)
+
     unregister_class(save)
     unregister_class(undo)
     unregister_class(redo)
     unregister_class(shade)
-    
-    unregister_class(uv_unwrap)    
-
-    unregister_class(edit_mesh_extrude_x)
-    unregister_class(edit_mesh_extrude_y)
-    unregister_class(edit_mesh_extrude_z)
-
-    unregister_class(edit_armature_extrude_x)
-    unregister_class(edit_armature_extrude_y)
-    unregister_class(edit_armature_extrude_z)
 
     unregister_class(manipulator_none)
     unregister_class(manipulator_move)
@@ -1065,26 +582,15 @@ def unregister():
     unregister_class(pivot_cursor)
     unregister_class(pivot_bounding_box_center)
 
-    unregister_class(view3d_viewpoints_menu)
-    unregister_class(view3d_edges_menu)
-    unregister_class(view3d_pivot_menu)
-    unregister_class(view3d_shade_menu)
+    unregister_class(menu_viewpoints)
+    unregister_class(menu_edges)
+    unregister_class(menu_pivot)
+    unregister_class(menu_shade)
 
-    unregister_class(view3d_select_mode_edge)
-    unregister_class(view3d_select_mode_face)
-
-    unregister_class(transform_apply)
     unregister_class(ui_layout_set_sculpt)
     unregister_class(ui_layout_set_object)
-    unregister_class(ui_layout_set_weightpaint)
     
-    unregister_class(view3d_weight_paint_set_brush)
-    unregister_class(view3d_weight_paint_set_brush_weight_inc)
-    unregister_class(view3d_weight_paint_set_brush_weight_dec)
-    unregister_class(view3d_weight_paint_set_brush_weight_default)
-    unregister_class(view3d_weight_paint_set_brush_radius_inc)
-    unregister_class(view3d_weight_paint_set_brush_radius_dec)
-    unregister_class(view3d_weight_paint_set_brush_radius_default)
-    unregister_class(view3d_weight_paint_set_brush_strength_inc)
-    unregister_class(view3d_weight_paint_set_brush_strength_dec)
-    unregister_class(view3d_weight_paint_set_brush_strength_default)
+
+
+    unregister_class(show_node_editor)
+    

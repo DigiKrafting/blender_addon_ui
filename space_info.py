@@ -21,6 +21,9 @@ import bpy
 from bpy.types import Header, Menu
 
 from . import ds_ui 
+from . import ds_model
+from . import ds_rigging
+from . import ds_uv
 
 class INFO_HT_header(Header):
     bl_space_type = 'INFO'
@@ -83,8 +86,6 @@ class INFO_HT_header(Header):
             row.label(text=scene.statistics(), translate=False)
         
         _ui_mode = ds_ui.ui_mode()
-        _obj_mode = context.mode
-        _obj = context.active_object
 
         if ds_ui.option_show('info_new'):
             if ds_ui.option_show('info_file_icons'):
@@ -120,7 +121,6 @@ class INFO_HT_header(Header):
             _text="Revert"
         layout.operator('wm.revert_mainfile',text=_text,icon='FILE_REFRESH')
 
-
         if ds_ui.option_show('info_file_icons'):
             _text=""
         else:
@@ -138,136 +138,26 @@ class INFO_HT_header(Header):
             _icon='COLOR_GREEN'
         else:
             _icon='META_EMPTY'
-        layout.operator('ds_ui.ui_layout_set',text="Model",icon=_icon).option_value = 'model'
+        layout.operator('ds_model.ui_layout',text="Model",icon=_icon)
 
-        if _ui_mode=='rig':
+        if _ui_mode=='rigging':
             _icon='COLOR_GREEN'
         else:
             _icon='META_EMPTY'
-        layout.operator('ds_ui.ui_layout_set',text="Rigging",icon=_icon).option_value = 'rig'
+        layout.operator('ds_rigging.ui_layout',text="Rigging",icon=_icon)
 
         if _ui_mode=='uv':
             _icon='COLOR_GREEN'
         else:
             _icon='META_EMPTY'
-        layout.operator('ds_ui.ui_layout_set',text="UV",icon=_icon).option_value = 'uv'
-
-        # UI Layout Menus
+        layout.operator('ds_uv.ui_layout',text="UV",icon=_icon)
 
         if _ui_mode=='model':
-            if ds_ui.option_show('info_meshes'):
-                layout.menu('ds_ui.info_meshes_edit_menu',icon="TRIA_DOWN")
-        elif _ui_mode=='rig':
-            if ds_ui.option_show('info_armatures'):
-                layout.menu('ds_ui.info_armatures_menu',icon="TRIA_DOWN")
-            if ds_ui.option_show('info_meshes'):
-                layout.menu('ds_ui.info_meshes_menu',icon="TRIA_DOWN")
-            if _obj_mode=='PAINT_WEIGHT':
-                layout.menu('ds_ui.info_vertex_groups_menu',icon="TRIA_DOWN")
-
+            ds_model.menu(context, layout)
+        elif _ui_mode=='rigging':
+            ds_rigging.menu(context, layout)
         elif _ui_mode=='uv':
-            if ds_ui.option_show('info_uvs'):
-                layout.menu('ds_ui.info_uv_menu',icon="TRIA_DOWN")
-        
-        # UI Menus
-
-        if _ui_mode=='model' and (_obj_mode=='OBJECT' or _obj_mode=='EDIT_MESH'):
-
-            layout.menu("INFO_MT_mesh_add",icon='OUTLINER_OB_MESH')
-
-        if _obj_mode=='EDIT_MESH' and (_ui_mode=='model' or _ui_mode=='uv'):
-
-            layout.menu("VIEW3D_MT_edit_mesh",icon='COLLAPSEMENU')
-
-        if _ui_mode=='model':
-
-            if _obj_mode=='OBJECT':
-
-                layout.menu("INFO_MT_curve_add", icon='OUTLINER_OB_CURVE')
-
-            elif _obj_mode=='EDIT_CURVE':
-
-                layout.menu("VIEW3D_MT_edit_curve",icon='COLLAPSEMENU')
-
-            elif _obj_mode=='EDIT_MESH':
-
-                _select_mode=bpy.context.scene.tool_settings.mesh_select_mode
-
-                if _select_mode[0]:
-                    layout.menu("VIEW3D_MT_edit_mesh_vertices",icon='COLLAPSEMENU')
-                if _select_mode[1]:
-                    layout.menu("VIEW3D_MT_edit_mesh_edges",icon='COLLAPSEMENU')
-                if _select_mode[2]:
-                    layout.menu("VIEW3D_MT_edit_mesh_faces",icon='COLLAPSEMENU')
-
-        elif _ui_mode=='rig':
-
-            if _obj_mode=='OBJECT':
-
-                layout.menu("INFO_MT_armature_add",icon='BONE_DATA')
-
-            elif _obj_mode=='EDIT_ARMATURE':
-
-                layout.menu("INFO_MT_edit_armature_add",icon='BONE_DATA')
-
-                layout.menu("VIEW3D_MT_edit_armature",icon='COLLAPSEMENU')
-
-            if _obj:
-
-                if _obj.show_x_ray==True:
-                    _icon='OUTLINER_DATA_ARMATURE'
-                else:
-                    _icon='ARMATURE_DATA'
-                
-                layout.operator("wm.context_toggle", text="X-Ray", icon=_icon).data_path = "scene.objects.active.show_x_ray"
-
-        elif _ui_mode=='uv':
-
-            layout.menu("VIEW3D_MT_uv_map",icon='COLLAPSEMENU')
-    
-        # UI Edit Mode
-
-        if _ui_mode=='model':
-
-                #layout.operator('object.mode_set',text="Object",icon="OBJECT_DATAMODE").mode='OBJECT'
-                #layout.operator('object.mode_set',text="Sculpt",icon="SCULPTMODE_HLT").mode='SCULPT'
-
-            if _obj_mode=='OBJECT':
-                if _obj and _obj.type=='MESH':
-                    layout.operator('object.mode_set',text="Edit",icon="EDITMODE_HLT").mode='EDIT'
-                    layout.operator('object.mode_set',text="Sculpt",icon="SCULPTMODE_HLT").mode='SCULPT'
-            elif _obj_mode=='EDIT_MESH':
-                layout.operator('ds_ui.ui_layout_set_object',text="Object",icon="OBJECT_DATAMODE")
-                layout.operator('ds_ui.ui_layout_set_sculpt',text="Sculpt",icon="SCULPTMODE_HLT")
-            elif _obj_mode=='SCULPT':
-                layout.operator('object.mode_set',text="Edit",icon="EDITMODE_HLT").mode='EDIT'
-                layout.operator('ds_ui.ui_layout_set_object',text="Object",icon="OBJECT_DATAMODE")
-
-        elif _ui_mode=='rig':
-
-            if _obj_mode=='EDIT_ARMATURE':
-                layout.operator('object.mode_set',text="Object",icon="OBJECT_DATAMODE").mode='OBJECT'
-                layout.operator('object.mode_set',text="Pose Mode",icon="POSE_HLT").mode='POSE'
-
-            elif _obj_mode=='POSE':
-                layout.operator('object.mode_set',text="Edit Mode",icon="EDITMODE_HLT").mode='EDIT'
-                layout.operator('object.mode_set',text="Object",icon="OBJECT_DATAMODE").mode='OBJECT'
-
-            elif _obj_mode=='OBJECT':
-                if _obj and _obj.type=='MESH':
-                    
-                    #layout.operator('object.mode_set',text="Edit Mode",icon="EDITMODE_HLT").mode='EDIT'
-                    layout.operator('object.mode_set',text="Weight Paint",icon="WPAINT_HLT").mode='WEIGHT_PAINT'
-
-            elif _obj_mode=='PAINT_WEIGHT':
-
-                if _obj:
-                    layout.operator('object.mode_set',text="Object",icon="OBJECT_DATAMODE").mode='OBJECT'
-            
-
-
-            #if _obj:
-            #    layout.operator('ds_ui.ui_layout_set_weightpaint',text="WEIGHT PAINT",icon="WPAINT_HLT")
+            ds_uv.menu(context, layout)
 
         # UI Import/Export
 
@@ -282,36 +172,8 @@ class INFO_HT_header(Header):
             layout.operator('export_scene.fbx',text="FBX",icon="EXPORT")
 
         # DS Pipeline Buttons
-
-        if 'blender_addon_pipeline' in bpy.context.user_preferences.addons:
-
-            if bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_zbc:
-
-                self.layout.operator('ds_zbc.export',text="ZBC",icon="EXPORT")
-                self.layout.operator('ds_zbc.import',text="ZBC",icon="IMPORT")
-
-            if bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_sp:
-
-                self.layout.operator('ds_sp.export_all',text="SP:All",icon="LINK_BLEND")
-                self.layout.operator('ds_sp.export_obj',text="SP:OBJ",icon="LINK_BLEND")
-
-            if bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_ic and bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_iclone_toggle:
-
-                layout.operator('ds_pipeline.iclone_toggle',icon='TRIA_RIGHT')
             
-            if (not bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_iclone_toggle and bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_ic) or (bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_ic and bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_iclone_toggle and bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_iclone_toggle_state):
-
-                layout.operator('ds_ic.import_base',text="Base",icon="IMPORT")
-                layout.operator('ds_ic.import_female',text="Female",icon="IMPORT")
-                layout.operator('ds_ic.import_male',text="Male",icon="IMPORT")
-
-                layout.operator('ds_ic.export_cc',text="CC",icon="LINK_BLEND")
-                layout.operator('ds_ic.export_3dx',text="3DX",icon="EXPORT")
-                layout.operator('ds_ic.export_ic',text="IC",icon="LINK_BLEND")
-
-            if bpy.context.user_preferences.addons['blender_addon_pipeline'].preferences.option_show_daz3d:
-
-                self.layout.operator('ds_daz3d.export',text="Daz3D",icon="LINK_BLEND")
+        ds_ui.blender_addon_pipeline(layout)
 
         # Extra Buttons
 
