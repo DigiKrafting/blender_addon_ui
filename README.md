@@ -1,12 +1,15 @@
 # Blender Addon UI
 
-Customised Blender UI focused on Modeling, Rigging and UV.
+Customised Blender UI focused on Modeling and Rigging.
+
+\* Updating ... to Blender 2.80.0 Beta+ ... \*
+
+(This is a WIP designed to make commonly used functions more accessible and less keyboard shortcut dependant and thus more graphics tablet friendly)
 
 # Features
 
 - Customised Helper Menus and Toolbars
-- Default toolbars and menu's are accessible via a ">" toggle button
-- blender_addon_pipeline Intergration
+- DKS Blender Addon's Intergration
 
 ## Model
 
@@ -36,13 +39,15 @@ Customised Blender UI focused on Modeling, Rigging and UV.
 
 # Required Blender Version
 
-2.79 
+0_8_0 > 2.80
+
+0_7_5 < 2.79 
 
 \* May work in previous versions but untested, space_info.py and space_view3d.py will likely cause issues/unexpected behaviour.
 
 # Installation
 
-Download either the tar.gz or zip from [https://github.com/Digiography/blender_addon_ui/releases/latest](https://github.com/Digiography/blender_addon_ui/releases/latest)
+Download either the tar.gz or zip from [https://github.com/DigiKrafting/blender_addon_ui/releases/latest](https://github.com/DigiKrafting/blender_addon_ui/releases/latest)
 
 Installing an Addon in Blender
 
@@ -52,6 +57,7 @@ Installing an Addon in Blender
 
 # Screenshots
 
+![alt](/screenshots/wip.png)
 ![alt](/screenshots/ui.png)
 ![alt](/screenshots/rigging.png)
 ![alt](/screenshots/uv.png)
