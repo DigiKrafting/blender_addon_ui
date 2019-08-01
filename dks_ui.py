@@ -20,6 +20,14 @@ import bpy
 from bpy.types import Header, Menu, Panel
 from bpy.app.translations import contexts as i18n_contexts
 
+from bl_ui.space_topbar import (
+    TOPBAR_MT_file,
+    TOPBAR_MT_edit,
+    TOPBAR_MT_render,
+    TOPBAR_MT_window,
+    TOPBAR_MT_help,
+)
+
 class workspace_set(bpy.types.Operator):
 
     bl_idname = "dks_ui.workspace_set"
@@ -73,7 +81,21 @@ class TOPBAR_HT_upper_bar(Header):
 
         layout.operator("wm.splash", text="", icon='BLENDER', emboss=False)
 
-        #TOPBAR_MT_editor_menus.draw_collapsible(context, layout)
+        if bpy.context.preferences.addons[__package__].preferences.option_ui_menu_toggle_state:
+
+            layout.operator('dks_ui.menu_toggle',text="",icon="TRIA_LEFT")
+
+            layout.menu("TOPBAR_MT_file")
+            layout.menu("TOPBAR_MT_edit")
+
+            layout.menu("TOPBAR_MT_render")
+
+            layout.menu("TOPBAR_MT_window")
+            layout.menu("TOPBAR_MT_help")
+
+        else:
+
+            layout.operator('dks_ui.menu_toggle',text="",icon="TRIA_RIGHT")
 
         #layout.separator()
         layout.operator('wm.read_homefile',text="",icon='FILE_NEW')
@@ -167,8 +189,9 @@ class TOPBAR_HT_upper_bar(Header):
             if bpy.context.preferences.addons['blender_addon_reallusion'].preferences.option_show_rl_toggle_state or not bpy.context.preferences.addons['blender_addon_reallusion'].preferences.option_show_rl_toggle:
 
                 row.operator("dks_rl.export_cc",text="CC",icon="EXPORT")
+                row.operator("dks_rl.import_cc",text="CC",icon="IMPORT")
                 row.operator("dks_rl.export_3dx",text="3DX",icon="EXPORT")
-                row.operator("dks_rl.import_base",text="Base",icon="IMPORT")
+                row.operator("dks_rl.import_neutral",text="Neutral",icon="IMPORT")
                 row.operator("dks_rl.import_female",text="Female",icon="IMPORT")
                 row.operator("dks_rl.import_male",text="Male",icon="IMPORT")
 

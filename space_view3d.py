@@ -587,7 +587,9 @@ class VIEW3D_HT_header(Header):
         if obj:
             sub.separator(factor=0.4)     
             sub.operator("object.mode_set",text="",icon='OBJECT_DATA').mode="OBJECT"
-            sub.operator("object.mode_set",text="",icon='EDITMODE_HLT').mode="EDIT"
+            if obj.type == 'MESH':
+                sub.operator("object.mode_set",text="",icon='EDITMODE_HLT').mode="EDIT"
+
         # DS UI <
 
         layout.template_header_3D_mode()
@@ -607,7 +609,7 @@ class VIEW3D_HT_header(Header):
             row.operator("mesh.delete",text="",icon='VERTEXSEL').type='VERT'
             row.operator("mesh.delete",text="",icon='EDGESEL').type='EDGE'
             row.operator("mesh.delete",text="",icon='FACESEL').type='FACE'
-        
+      
         row = layout.row(align=True)
         row.operator("view3d.select_circle",text="",icon='MESH_CIRCLE')
         row.operator("view3d.select_box",text="",icon='MESH_PLANE')
@@ -623,7 +625,6 @@ class VIEW3D_HT_header(Header):
         row.operator("view3d.localview",text="",icon='HIDE_OFF')
 
         # DS UI <
-
         # Grease Pencil
         if obj and obj.type == 'GPENCIL' and context.gpencil_data:
             gpd = context.gpencil_data
@@ -678,6 +679,9 @@ class VIEW3D_HT_header(Header):
             row.operator("mesh.loop_multi_select",text="",icon='EDGESEL').ring=False
             row.operator("mesh.loop_multi_select",text="",icon='SNAP_EDGE').ring=True
             row.operator("mesh.subdivide",text="",icon='MESH_GRID')
+
+            row = layout.row(align=True)
+            row.operator("mesh.edge_face_add",text="",icon='MESH_PLANE')
 
         # DS UI <
 

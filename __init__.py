@@ -20,7 +20,7 @@ bl_info = {
         "name": "DKS UI",
         "description": "UI Customisations",
         "author": "DigiKrafting.Studio",
-        "version": (0, 8, 0),
+        "version": (0, 8, 1),
         "blender": (2, 80, 0),
         "location": "Properties > Scene, Info Toolbar, 3D View Toolbar",
         "wiki_url":    "https://github.com/DigiKrafting/blender_addon_ui/wiki",
@@ -74,6 +74,11 @@ class dks_ui_addon_prefs(bpy.types.AddonPreferences):
             default='Modeling',
     )
 
+    option_ui_menu_toggle_state : bpy.props.BoolProperty(
+            name="Menu Toggle State",
+            default=False,
+    )
+
     def draw(self, context):
 
         layout = self.layout
@@ -81,9 +86,25 @@ class dks_ui_addon_prefs(bpy.types.AddonPreferences):
         box=layout.box()
         box.prop(self, 'option_ui_mode')
 
+class dks_ui_menu_toggle(bpy.types.Operator):
+
+    bl_idname = "dks_ui.menu_toggle"
+    bl_label = "SP"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    
+    def execute(self, context):
+
+        if not bpy.context.preferences.addons[__package__].preferences.option_ui_menu_toggle_state:
+            bpy.context.preferences.addons[__package__].preferences.option_ui_menu_toggle_state=True
+        else:
+            bpy.context.preferences.addons[__package__].preferences.option_ui_menu_toggle_state=False
+        return {'FINISHED'}
+
 classes = (
     dks_ui_addon_prefs,
     dks_ui_quit,
+    dks_ui_menu_toggle,
 )
 
 def register():
