@@ -20,8 +20,8 @@ bl_info = {
         "name": "DKS UI",
         "description": "UI Customisations",
         "author": "DigiKrafting.Studio",
-        "version": (0, 8, 1),
-        "blender": (2, 80, 0),
+        "version": (0, 8, 2),
+        "blender": (3, 0, 0),
         "location": "Properties > Scene, Info Toolbar, 3D View Toolbar",
         "wiki_url":    "https://github.com/DigiKrafting/blender_addon_ui/wiki",
         "tracker_url": "https://github.com/DigiKrafting/blender_addon_ui/issues",
@@ -32,6 +32,10 @@ import bpy
 from bpy.utils import register_class, unregister_class
 from os import path, makedirs
 from . import dks_ui
+from . import dks_globals
+
+import bpy.utils.previews
+
 
 class dks_ui_quit(bpy.types.Operator):
     bl_idname = "dks_ui.quit"
@@ -68,6 +72,8 @@ class dks_ui_addon_prefs(bpy.types.AddonPreferences):
 
     # Global Options
 
+    option_active_workspace : bpy.props.StringProperty(name="active_workspace",default="Modeling",)
+
     option_ui_mode : bpy.props.EnumProperty(
             items=[('Modeling', "Modeling", "Modeling"),('UV Editing', "UV Editing", "UV Editing"),('Animation', "Animation", "Animation"),],
             name="UI Mode",
@@ -78,6 +84,8 @@ class dks_ui_addon_prefs(bpy.types.AddonPreferences):
             name="Menu Toggle State",
             default=False,
     )
+
+    option_active_armature : bpy.props.StringProperty(name="active_armature",default="",)
 
     def draw(self, context):
 
@@ -111,20 +119,46 @@ def register():
 
     for cls in classes:
         register_class(cls)
+    
+    global icons
+
+    icons = bpy.utils.previews.new()
+    icons_dir = path.join(path.dirname(__file__), "icons")
+    icons.load("DKS_VIEW_FRONT", path.join(icons_dir, "view_front.png"), 'IMAGE')
+    icons.load("DKS_VIEW_BACK", path.join(icons_dir, "view_back.png"), 'IMAGE')
+    icons.load("DKS_VIEW_LEFT", path.join(icons_dir, "view_left.png"), 'IMAGE')
+    icons.load("DKS_VIEW_RIGHT", path.join(icons_dir, "view_right.png"), 'IMAGE')
+    icons.load("DKS_VIEW_TOP", path.join(icons_dir, "view_top.png"), 'IMAGE')
+    icons.load("DKS_VIEW_BOTTOM", path.join(icons_dir, "view_bottom.png"), 'IMAGE')
 
     dks_ui.register()
 
+    from . import dks_rigging
+    dks_rigging.register()
+
+    from . import dks_modeling
+    dks_modeling.register()
+
     from . import space_view3d
-   
+    space_view3d.preview_collections["main"] = icons
+  
     register_class(space_view3d.VIEW3D_HT_header)
-    
+
 def unregister():
 
     dks_ui.unregister()
 
     for cls in reversed(classes):
         unregister_class(cls)
+ 
+    from . import dks_rigging
+    dks_rigging.unregister()
+    
+    from . import dks_modeling
+    dks_modeling.unregister()
 
     from . import space_view3d
 
     unregister_class(space_view3d.VIEW3D_HT_header)            
+
+    space_view3d.preview_collections.clear()

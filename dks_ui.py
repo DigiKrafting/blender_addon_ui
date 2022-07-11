@@ -28,6 +28,7 @@ from bl_ui.space_topbar import (
     TOPBAR_MT_help,
 )
 
+
 class workspace_set(bpy.types.Operator):
 
     bl_idname = "dks_ui.workspace_set"
@@ -43,9 +44,20 @@ class workspace_set(bpy.types.Operator):
 
         bpy.context.window.workspace = bpy.data.workspaces[self.option_workspace]
         
-        bpy.context.preferences.addons[__package__].preferences.option_ui_mode=self.option_workspace
+        #bpy.context.preferences.addons[__package__].preferences.option_ui_mode=self.option_workspace
 
-        return {'FINISHED'}    
+        bpy.context.preferences.addons[__package__].preferences.option_active_workspace=self.option_workspace
+
+        return {'FINISHED'} 
+        
+class MENU_MT_armatures(bpy.types.Menu):
+    bl_label = "Armatures"
+    def draw(self, context):
+        layout = self.layout
+        for ob in context.scene.objects:
+            if ob.type == 'ARMATURE':
+                layout.operator('dks_rigging.menu_armature_select',text=ob.name).option_value=ob.name
+
 
 class render_and_display(bpy.types.Operator):
 
@@ -56,11 +68,21 @@ class render_and_display(bpy.types.Operator):
     bl_description = "Render and Display"
     def execute(self, context):
 
-        bpy.context.scene.render.display_mode = 'NONE'
+       # bpy.context.scene.render.display_mode = 'NONE'
         bpy.ops.render.render(use_viewport=True)
-        bpy.context.window.workspace = bpy.data.workspaces["Rendering"]
+       # bpy.context.window.workspace = bpy.data.workspaces["Rendering"]
 
         return {'FINISHED'}    
+
+class TOPBAR_MT_workspaces(Menu):
+    bl_idname = "dks_ui.workspaces"
+    bl_label = "WorkSpaces"
+    def draw(self, context):
+        layout = self.layout
+
+        for _workspace in bpy.data.workspaces:
+
+            layout.operator("dks_ui.workspace_set", text=_workspace.name).option_workspace = _workspace.name
 
 class TOPBAR_HT_upper_bar(Header):
     bl_space_type = 'TOPBAR'
@@ -97,7 +119,8 @@ class TOPBAR_HT_upper_bar(Header):
 
             layout.operator('dks_ui.menu_toggle',text="",icon="TRIA_RIGHT")
 
-        #layout.separator()
+        layout.label(text="",icon='THREE_DOTS')
+
         layout.operator('wm.read_homefile',text="",icon='FILE_NEW')
         layout.operator('wm.open_mainfile',text="",icon='FILEBROWSER')
         
@@ -108,22 +131,27 @@ class TOPBAR_HT_upper_bar(Header):
 
         layout.operator_context = 'EXEC_AREA' if context.blend_data.is_saved else 'INVOKE_AREA'
         layout.operator("wm.save_mainfile", text="", icon='FILE_TICK', emboss=save_emboss)  
+
         layout.operator_context = 'INVOKE_AREA'
         layout.operator('wm.save_as_mainfile',text="",icon='GRIP')
         layout.operator('wm.revert_mainfile',text="",icon='FILE_REFRESH')
+
+        layout.label(text="",icon='THREE_DOTS')
+
         layout.operator('ed.undo',text="",icon="LOOP_BACK")
         layout.operator('ed.redo',text="",icon="LOOP_FORWARDS")
-        layout.operator("dks_ui.render_and_display", text="", icon='RENDER_STILL')
-#        layout.operator("render.view_show", text="", icon='RENDER_RESULT')
-        layout.operator("wm.search_menu", text="", icon='VIEWZOOM')
-
-#        layout.separator()
-
-#        layout.template_search(context.workspace, "render_layer", context.scene, "render_layers")
-
-#        layout.template_ID(context.window, "workspace", new="workspace.workspace_add_menu", unlink="workspace.workspace_delete")
         
-        workspace_ui_mode = bpy.context.preferences.addons[__package__].preferences.option_ui_mode
+        layout.label(text="",icon='THREE_DOTS')
+        layout.operator("wm.search_menu", text="", icon='VIEWZOOM')
+        layout.label(text="",icon='THREE_DOTS')
+
+        layout.operator("render.render", text="", icon='RENDER_STILL').use_viewport = True
+
+        anim_render = layout.operator("render.render", text="", icon='RENDER_ANIMATION')
+        anim_render.use_viewport = True
+        anim_render.animation = True
+
+        workspace_ui_mode = bpy.context.preferences.addons[__package__].preferences.option_active_workspace
         workspace_icon_model = "LAYER_USED"
         workspace_icon_uv = "LAYER_USED"
         workspace_icon_anim = "LAYER_USED"
@@ -135,21 +163,25 @@ class TOPBAR_HT_upper_bar(Header):
         elif workspace_ui_mode == 'Animation':
             workspace_icon_anim = "LAYER_ACTIVE"
         
+        layout.label(text="",icon='THREE_DOTS')
+
+        layout.menu("dks_ui.workspaces", text=workspace_ui_mode)
 
         layout.operator("dks_ui.workspace_set", text="Model", icon=workspace_icon_model).option_workspace = 'Modeling'
         layout.operator("dks_ui.workspace_set", text="UV", icon=workspace_icon_uv).option_workspace = 'UV Editing'
         layout.operator("dks_ui.workspace_set", text="Anim", icon=workspace_icon_anim).option_workspace = 'Animation'
-
-#        layout.operator('import_scene.obj',text="OBJ",icon="IMPORT")
-#        layout.operator('export_scene.obj',text="OBJ",icon="EXPORT")
         
+        if screen.show_fullscreen:
+            layout.operator(
+                "screen.back_to_previous",
+                icon='SCREEN_BACK',
+                text="Back to Previous",
+            )
+        
+        layout.label(text="",icon='THREE_DOTS')
+            
         layout.operator('import_scene.fbx',text="FBX",icon="IMPORT")
         layout.operator('export_scene.fbx',text="FBX",icon="EXPORT")
-
-        if 'blender_addon_goz' in bpy.context.preferences.addons:
-
-            layout.operator(operator="dks_goz.export", text="ZB", icon='EXPORT')
-            layout.operator(operator="dks_goz.import", text="ZB", icon='IMPORT')
 
         if 'blender_addon_rizom_uv' in bpy.context.preferences.addons:
 
@@ -199,13 +231,7 @@ class TOPBAR_HT_upper_bar(Header):
 
             layout.operator('dks_ue.export',text="UE",icon="EXPORT")
 
-        if screen.show_fullscreen:
-
-            layout.operator(
-                "screen.back_to_previous",
-                icon='SCREEN_BACK',
-                text="Back to Previous",
-            )
+        layout.label(text="",icon='THREE_DOTS')
 
     def draw_right(self, context):
         layout = self.layout
@@ -233,6 +259,7 @@ classes = (
     workspace_set,
     render_and_display,
     TOPBAR_HT_upper_bar,
+    TOPBAR_MT_workspaces,
 )
 
 def register():
@@ -240,6 +267,7 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         register_class(cls)
+    
 
 def unregister():
 
