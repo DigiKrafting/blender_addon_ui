@@ -2,7 +2,7 @@
 
 Customised Blender UI focused on Modeling and Rigging.
 
-\* Updating ... to Blender 2.80.0 Beta+ ... \*
+\* Updated ... to Blender 5.1 ... \*
 
 (This is a WIP designed to make commonly used functions more accessible and less keyboard shortcut dependant and thus more graphics tablet friendly)
 
@@ -38,6 +38,10 @@ Customised Blender UI focused on Modeling and Rigging.
 - UV Mapping Menu
 
 # Required Blender Version
+
+0_8_3 > 5.1
+
+0_8_2 > 3.0
 
 0_8_0 > 2.80
 

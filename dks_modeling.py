@@ -53,11 +53,37 @@ class object_origin_geometry(bpy.types.Operator):
 
         return {'FINISHED'}    
 
+class object_remove_doubles(bpy.types.Operator):
 
+    bl_label = "Remove Doubles"
+    bl_idname = "dks_modeling.object_remove_doubles"
+
+    def execute(self, context):
+
+        #bpy.ops.mesh.select_all(action='SELECT')
+        #bpy.ops.mesh.remove_doubles()
+        bpy.ops.mesh.remove_doubles(threshold=0.1, use_unselected=True)
+
+        return {'FINISHED'}    
+    
+class object_normals_reset(bpy.types.Operator):
+
+    bl_label = "Normals Reset"
+    bl_idname = "dks_modeling.object_normals_reset"
+
+    def execute(self, context):
+
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.normals_tools(mode='RESET')
+
+        return {'FINISHED'}    
+        
 classes = (
     object_center,
     object_transform_apply,
-    object_origin_geometry
+    object_origin_geometry,
+    object_remove_doubles,
+    object_normals_reset
 )
 
 def register():

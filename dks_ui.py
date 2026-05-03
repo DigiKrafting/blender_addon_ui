@@ -155,8 +155,15 @@ class TOPBAR_HT_upper_bar(Header):
         workspace_icon_model = "LAYER_USED"
         workspace_icon_uv = "LAYER_USED"
         workspace_icon_anim = "LAYER_USED"
+        
+        workspace_modeling_name = 'Default'
 
-        if workspace_ui_mode == 'Modeling':
+        for _workspace in bpy.data.workspaces:
+
+            if _workspace.name == 'Modeling':
+                workspace_modeling_name = 'Modeling'
+
+        if workspace_ui_mode == workspace_modeling_name:
             workspace_icon_model = "LAYER_ACTIVE"
         elif workspace_ui_mode == 'UV Editing':
             workspace_icon_uv = "LAYER_ACTIVE"
@@ -167,7 +174,7 @@ class TOPBAR_HT_upper_bar(Header):
 
         layout.menu("dks_ui.workspaces", text=workspace_ui_mode)
 
-        layout.operator("dks_ui.workspace_set", text="Model", icon=workspace_icon_model).option_workspace = 'Modeling'
+        layout.operator("dks_ui.workspace_set", text="Model", icon=workspace_icon_model).option_workspace = workspace_modeling_name
         layout.operator("dks_ui.workspace_set", text="UV", icon=workspace_icon_uv).option_workspace = 'UV Editing'
         layout.operator("dks_ui.workspace_set", text="Anim", icon=workspace_icon_anim).option_workspace = 'Animation'
         
@@ -179,9 +186,12 @@ class TOPBAR_HT_upper_bar(Header):
             )
         
         layout.label(text="",icon='THREE_DOTS')
-            
+
         layout.operator('import_scene.fbx',text="FBX",icon="IMPORT")
         layout.operator('export_scene.fbx',text="FBX",icon="EXPORT")
+        
+        layout.operator('import_scene.gltf',text="GLB",icon="IMPORT")
+        layout.operator('export_scene.gltf',text="GLB",icon="EXPORT")
 
         if 'blender_addon_rizom_uv' in bpy.context.preferences.addons:
 
